@@ -23,7 +23,7 @@
         <button class="btn-dismiss" onclick="AppUpdate.dismissUpdate()">✕</button>
     </div>
     <header class="app-header">    
-        <div class="logo" id="app-logo">CuedMoney <span id="app-version" style="font-size:0.5rem;color:#555;font-weight:400;"></span></div>
+        <div class="logo" id="app-logo" onclick="if(window.License)License.handleLogoClick()">CuedMoney <span id="app-version" style="font-size:0.5rem;color:#555;font-weight:400;"></span></div>
         <div class="header-actions">
             <button onclick="SyncModule.exportData()" class="btn-icon">👆Export</button>
             <button onclick="document.getElementById('import-file').click()" class="btn-icon">👇Import</button>
@@ -50,6 +50,7 @@
     </div>
 
     <script src="js/html2canvas.min.js"></script>
+    <script src="js/license.js"></script>
     <script src="js/app_update.js"></script>
     <script src="js/core.js"></script>
     <script src="js/item_db.js"></script>

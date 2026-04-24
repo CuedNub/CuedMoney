@@ -294,3 +294,64 @@ body {
     from { transform: translateY(-100%); }
     to { transform: translateY(0); }
 }
+
+/* LICENSE LOCKSCREEN */
+.license-lockscreen {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: var(--bg-main);
+    z-index: 500;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    text-align: center;
+}
+
+.lock-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.lock-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: var(--txt-white);
+}
+
+.lock-desc {
+    font-size: 0.85rem;
+    color: var(--txt-muted);
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.lock-buttons {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.btn-lock-primary {
+    padding: 16px;
+    background: var(--clr-bank);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    font-weight: 800;
+    font-size: 0.9rem;
+}
+
+.btn-lock-secondary {
+    padding: 14px;
+    background: none;
+    color: var(--txt-muted);
+    border: 1px solid #333;
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}

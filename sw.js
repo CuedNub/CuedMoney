@@ -17,6 +17,7 @@ const ASSETS = [
     BASE + 'js/form_shopping.js',
     BASE + 'js/receipt_digital.js',
     BASE + 'js/app_update.js',
+    BASE + 'js/license.js',
     BASE + 'manifest.json',
     BASE + 'icons/icon-192.png',
     BASE + 'icons/icon-512.png'

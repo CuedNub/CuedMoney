@@ -32,6 +32,15 @@ const Core = {
             this.refreshUI();
             console.log("CuedMoney v" + Core.APP_VERSION + " Ready!");
             
+            // Inisialisasi sistem lisensi
+            if (window.License) {
+                var licenseOK = License.init();
+                if (!licenseOK) {
+                    console.log('CuedMoney: Lisensi tidak aktif');
+                    return; // Stop init, app terkunci
+                }
+            }
+
             // Inisialisasi sistem update
             if (window.AppUpdate) AppUpdate.init();
 
