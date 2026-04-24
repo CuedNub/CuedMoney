@@ -4,6 +4,8 @@
 
 const Core = {
     // STATE: Ingatan Aplikasi
+    isFormOpen: false,
+
     state: {
         data: {
             transactions: [], // Buku Besar Utama (Semua mutasi kumpul di sini)
@@ -64,6 +66,7 @@ const Core = {
         if (body && container && overlay) {
             body.innerHTML = htmlContent;
             overlay.style.display = 'block';
+            this.isFormOpen = true;
             
             // Jeda 10ms agar animasi CSS slide-up berjalan mulus
             setTimeout(() => {
@@ -78,6 +81,7 @@ const Core = {
 
         if (container && overlay) {
             container.classList.remove('show');
+            this.isFormOpen = false;
             
             // Tunggu animasi turun selesai (300ms) baru hilangkan overlay
             setTimeout(() => {
@@ -88,7 +92,28 @@ const Core = {
     }
 };
 
+// Perlindungan: Pesan konfirmasi saat refresh/tutup halaman saat form terbuka
+window.addEventListener('beforeunload', function(e) {
+    if (Core.isFormOpen) {
+        e.preventDefault();
+        e.returnValue = 'Kamu sedang mengisi formulir. Yakin ingin meninggalkan halaman?';
+        return e.returnValue;
+    }
+});
+
+// Perlindungan: Tombol back di HP
+window.addEventListener('popstate', function(e) {
+    if (Core.isFormOpen) {
+        // Dorong state baru agar back tidak keluar
+        history.pushState(null, '', location.href);
+        // Tutup modal sebagai gantinya
+        Core.closeModal();
+    }
+});
+
 // Jalankan Mandor saat halaman HTML sudah siap sepenuhnya
 document.addEventListener('DOMContentLoaded', () => {
     Core.init();
+    // Siapkan history state untuk tangkap tombol back
+    history.pushState(null, '', location.href);
 });
