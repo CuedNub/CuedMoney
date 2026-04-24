@@ -3,7 +3,7 @@
 */
 
 const Core = {
-    APP_VERSION: '1.2.1',
+    APP_VERSION: '1.2.2',
     // STATE: Ingatan Aplikasi
     isFormOpen: false,
 
@@ -44,9 +44,11 @@ const Core = {
             // Inisialisasi sistem update
             if (window.AppUpdate) AppUpdate.init();
 
-            // Tampilkan versi di header
-            const verEl = document.getElementById('app-version');
-            if (verEl) verEl.textContent = 'v' + Core.APP_VERSION;
+            // Tampilkan versi di header (hanya jika License tidak handle)
+            if (!window.License) {
+                const verEl = document.getElementById('app-version');
+                if (verEl) verEl.textContent = 'v' + Core.APP_VERSION;
+            }
         }, 100);
     },
 
