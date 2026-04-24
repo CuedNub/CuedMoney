@@ -1,80 +1,75 @@
-/* SERVICE WORKER - CuedMoney PWA
-   Fungsi: Cache semua file agar bisa offline
-*/
-
 const CACHE_NAME = 'cuedmoney-v1.0.0';
+const BASE = '/CuedMoney/';
 
-// Semua file yang akan disimpan offline
-const FILES_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/css/style.css',
-    '/js/core.js',
-    '/js/item_db.js',
-    '/js/engine.js',
-    '/js/data_sync.js',
-    '/js/dash_liquid.js',
-    '/js/dash_debt.js',
-    '/js/filter_advanced.js',
-    '/js/list_item.js',
-    '/js/form_universal.js',
-    '/js/form_shopping.js',
-    '/js/receipt_digital.js',
-    '/manifest.json',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png'
+const ASSETS = [
+    BASE,
+    BASE + 'index.html',
+    BASE + 'css/style.css',
+    BASE + 'js/core.js',
+    BASE + 'js/engine.js',
+    BASE + 'js/item_db.js',
+    BASE + 'js/data_sync.js',
+    BASE + 'js/dash_liquid.js',
+    BASE + 'js/dash_debt.js',
+    BASE + 'js/filter_advanced.js',
+    BASE + 'js/list_item.js',
+    BASE + 'js/form_universal.js',
+    BASE + 'js/form_shopping.js',
+    BASE + 'js/receipt_digital.js',
+    BASE + 'js/app_update.js',
+    BASE + 'manifest.json',
+    BASE + 'icons/icon-192.png',
+    BASE + 'icons/icon-512.png'
 ];
 
 // Install: simpan semua file ke cache
-self.addEventListener('install', event => {
+self.addEventListener('install', function(event) {
+    console.log('[SW] Install: ' + CACHE_NAME);
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('CuedMoney: Menyimpan file ke cache...');
-                return cache.addAll(FILES_TO_CACHE);
-            })
-            .then(() => {
-                console.log('CuedMoney: Semua file tersimpan, siap offline!');
-                return self.skipWaiting();
-            })
+        caches.open(CACHE_NAME).then(function(cache) {
+            return cache.addAll(ASSETS);
+        })
     );
+    // Jangan langsung aktifkan, tunggu user klik update
+    // self.skipWaiting() akan dipanggil via pesan
 });
 
 // Activate: hapus cache lama
-self.addEventListener('activate', event => {
+self.addEventListener('activate', function(event) {
+    console.log('[SW] Activate: ' + CACHE_NAME);
     event.waitUntil(
-        caches.keys().then(keyList => {
-            return Promise.all(keyList.map(key => {
-                if (key !== CACHE_NAME) {
-                    console.log('CuedMoney: Hapus cache lama:', key);
+        caches.keys().then(function(keys) {
+            return Promise.all(
+                keys.filter(function(key) {
+                    return key !== CACHE_NAME;
+                }).map(function(key) {
+                    console.log('[SW] Hapus cache lama: ' + key);
                     return caches.delete(key);
-                }
-            }));
-        }).then(() => self.clients.claim())
+                })
+            );
+        })
+    );
+    self.clients.claim();
+});
+
+// Fetch: cache first, fallback ke network
+self.addEventListener('fetch', function(event) {
+    event.respondWith(
+        caches.match(event.request).then(function(cached) {
+            if (cached) {
+                return cached;
+            }
+            return fetch(event.request).catch(function() {
+                return caches.match(BASE + 'index.html');
+            });
+        })
     );
 });
 
-// Fetch: ambil dari cache dulu, baru internet
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request)
-                    .then(response => {
-                        if (!response || response.status !== 200) {
-                            return response;
-                        }
-                        const responseClone = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(cache => cache.put(event.request, responseClone));
-                        return response;
-                    })
-                    .catch(() => {
-                        return caches.match('/index.html');
-                    });
-            })
-    );
+// Terima pesan dari app untuk skipWaiting
+self.addEventListener('message', function(event) {
+    if (event.data && event.data.action === 'skipWaiting') {
+        console.log('[SW] Skip waiting, aktivasi versi baru...');
+        self.skipWaiting();
+    }
 });

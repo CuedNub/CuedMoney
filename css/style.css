@@ -231,3 +231,66 @@ body {
     font-weight: 900;
     margin-top: 10px;
 }
+
+/* UPDATE BANNER */
+.update-banner {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(135deg, #2979ff, #1565c0);
+    color: white;
+    padding: 12px 20px;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    animation: slideDown 0.3s ease-out;
+}
+
+.update-banner.show {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.update-banner .update-text {
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex: 1;
+}
+
+.update-banner .update-text small {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 400;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+.update-banner .btn-update {
+    background: white;
+    color: #1565c0;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+.update-banner .btn-dismiss {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-left: 8px;
+    padding: 0 5px;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}

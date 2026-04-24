@@ -13,6 +13,15 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- BANNER UPDATE -->
+    <div id="update-banner" class="update-banner">
+        <div class="update-text">
+            🔄 Update tersedia!
+            <small id="update-version-info">Versi baru siap dipasang</small>
+        </div>
+        <button class="btn-update" onclick="AppUpdate.doUpdate()">UPDATE</button>
+        <button class="btn-dismiss" onclick="AppUpdate.dismissUpdate()">✕</button>
+    </div>
     <header class="app-header">    
         <div class="logo" id="app-logo">CuedMoney <span id="app-version" style="font-size:0.5rem;color:#555;font-weight:400;"></span></div>
         <div class="header-actions">
@@ -41,6 +50,7 @@
     </div>
 
     <script src="js/html2canvas.min.js"></script>
+    <script src="js/app_update.js"></script>
     <script src="js/core.js"></script>
     <script src="js/item_db.js"></script>
     <script src="js/engine.js"></script>
@@ -56,7 +66,6 @@
         // Registrasi Service Worker untuk mode offline
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
                     .then(reg => console.log('CuedMoney SW terdaftar:', reg.scope))
                     .catch(err => console.log('CuedMoney SW gagal:', err));
             });

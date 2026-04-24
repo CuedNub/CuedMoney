@@ -32,6 +32,9 @@ const Core = {
             this.refreshUI();
             console.log("CuedMoney v" + Core.APP_VERSION + " Ready!");
             
+            // Inisialisasi sistem update
+            if (window.AppUpdate) AppUpdate.init();
+
             // Tampilkan versi di header
             const verEl = document.getElementById('app-version');
             if (verEl) verEl.textContent = 'v' + Core.APP_VERSION;
