@@ -3,7 +3,7 @@
 */
 
 const Core = {
-    APP_VERSION: '1.0.0',
+    APP_VERSION: '1.0.1',
     // STATE: Ingatan Aplikasi
     isFormOpen: false,
 
