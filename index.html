@@ -31,6 +31,17 @@
         </div>
     </header>
 
+    <!-- LICENSE LOCKSCREEN -->
+    <div id="license-lockscreen" class="license-lockscreen">
+        <div class="lock-icon">🔒</div>
+        <div id="lock-title" class="lock-title">Masa Aktif Berakhir</div>
+        <div id="lock-desc" class="lock-desc">Hubungi admin untuk kode lisensi.</div>
+        <div class="lock-buttons">
+            <button class="btn-lock-primary" onclick="License.lockscreenInput()">🔑 Input Lisensi</button>
+            <button class="btn-lock-secondary" onclick="License.lockscreenExport()">📤 Export Data</button>
+        </div>
+    </div>
+
     <main id="app-content">
         <section id="dash-liquid-area"></section>
 
