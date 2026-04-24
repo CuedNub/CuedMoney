@@ -42,11 +42,17 @@ const License = {
         var daysMap = { 30: 'A', 60: 'B', 90: 'C', 180: 'D', 365: 'E' };
         var daysCode = daysMap[days] || 'X';
 
-        // Buat kode 4 bagian
+        // Buat string untuk checksum (SELALU lowercase)
+        var hashStr = hash.toString(36).toLowerCase().substring(0, 3);
+        var timeStr = timestamp.toString(36).toLowerCase().substring(0, 4);
+
+        // Hitung checksum dari lowercase
+        var part4 = this.checksum(daysCode + hashStr + timeStr);
+
+        // Tampilkan kode dalam UPPERCASE
         var part1 = 'CM';
-        var part2 = daysCode + hash.toString(36).toUpperCase().substring(0, 3);
-        var part3 = timestamp.toString(36).toUpperCase().substring(0, 4);
-        var part4 = this.checksum(daysCode + hash.toString(36) + timestamp.toString(36));
+        var part2 = daysCode + hashStr.toUpperCase();
+        var part3 = timeStr.toUpperCase();
 
         return part1 + '-' + part2 + '-' + part3 + '-' + part4;
     },
@@ -68,17 +74,16 @@ const License = {
         if (parts.length !== 4) return null;
         if (parts[0] !== 'CM') return null;
 
-        // Ambil kode durasi dari part2 karakter pertama
+        // Ambil kode durasi
         var daysCode = parts[1].charAt(0);
         var daysMap = { 'A': 30, 'B': 60, 'C': 90, 'D': 180, 'E': 365 };
         var days = daysMap[daysCode];
-
         if (!days) return null;
 
-        // Validasi checksum
-        var part2lower = parts[1].toLowerCase();
+        // Checksum: pakai lowercase (sama seperti saat generate)
+        var part2rest = parts[1].substring(1).toLowerCase();
         var part3lower = parts[2].toLowerCase();
-        var expectedChecksum = this.checksum(daysCode + part2lower.substring(1) + part3lower);
+        var expectedChecksum = this.checksum(daysCode + part2rest + part3lower);
 
         if (parts[3] !== expectedChecksum) return null;
 
