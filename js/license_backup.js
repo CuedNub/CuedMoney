@@ -1,14 +1,13 @@
 /* FILE: js/license.js
-   VERSI: 2.0
-   FUNGSI: Sistem Lisensi Berbasis Hari Pakai + World Time API
-   UPDATE: Anti-manipulasi tanggal HP
+   VERSI: 1.0
+   FUNGSI: Sistem Lisensi Berbasis Durasi Hari
 */
 
 const License = {
 
     // =========================================================
     // ★ AWAL CUSTOM FUNCTIONS License
-    // Kelompok: Config, Time, Encode/Decode, Storage, UI, Admin
+    // Kelompok: Config, Encode/Decode, Validasi, UI, Admin
     // =========================================================
 
     // ---------------------------------------------------------
@@ -19,128 +18,18 @@ const License = {
     SECRET_KEY: 'CM-SECRET-2025-CUED',
     LICENSE_STORAGE_KEY: 'cued_money_license',
     USED_CODES_KEY: 'cued_money_used_codes',
-    USAGE_LOG_KEY: 'cued_money_usage_log',
     WARNING_DAYS: 7,
-    TIME_API_URL: 'https://worldtimeapi.org/api/ip',
-    TIME_API_TIMEOUT: 5000,
-
-    // ---------------------------------------------------------
-    // WORLD TIME API — Ambil waktu asli dari server
-    // ---------------------------------------------------------
-
-    // Ambil waktu dari server (World Time API)
-    fetchServerTime() {
-        return new Promise(function(resolve) {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function() {
-                controller.abort();
-            }, License.TIME_API_TIMEOUT);
-
-            fetch(License.TIME_API_URL, { signal: controller.signal })
-                .then(function(response) {
-                    clearTimeout(timeoutId);
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (data && data.datetime) {
-                        var serverTime = new Date(data.datetime);
-                        console.log('[License] Waktu server: ' + serverTime.toLocaleString('id-ID'));
-                        resolve(serverTime);
-                    } else {
-                        console.log('[License] Response API tidak valid, pakai jam HP');
-                        resolve(null);
-                    }
-                })
-                .catch(function(err) {
-                    clearTimeout(timeoutId);
-                    console.log('[License] API gagal (' + err.message + '), pakai jam HP');
-                    resolve(null);
-                });
-        });
-    },
-
-    // Ambil waktu terpercaya: server dulu, fallback ke HP
-    getTrustedTime() {
-        return this.fetchServerTime().then(function(serverTime) {
-            if (serverTime) {
-                // Simpan waktu server terakhir sebagai referensi
-                localStorage.setItem('cued_money_last_server_time', serverTime.toISOString());
-                localStorage.setItem('cued_money_last_server_check', new Date().toISOString());
-                return serverTime;
-            }
-
-            // Fallback: pakai jam HP tapi cek apakah mundur
-            var now = new Date();
-            var lastOpen = localStorage.getItem('cued_money_last_open');
-            if (lastOpen) {
-                var lastOpenDate = new Date(lastOpen);
-                if (now < lastOpenDate) {
-                    console.log('[License] ⚠️ Tanggal HP mundur! Pakai lastOpenDate');
-                    return lastOpenDate;
-                }
-            }
-            return now;
-        });
-    },
-
-    // ---------------------------------------------------------
-    // USAGE LOG — Catat hari pakai
-    // ---------------------------------------------------------
-
-    // Ambil log hari pakai
-    getUsageLog() {
-        var saved = localStorage.getItem(this.USAGE_LOG_KEY);
-        if (saved) {
-            try { return JSON.parse(saved); }
-            catch (e) { return []; }
-        }
-        return [];
-    },
-
-    // Simpan log hari pakai
-    saveUsageLog(log) {
-        localStorage.setItem(this.USAGE_LOG_KEY, JSON.stringify(log));
-    },
-
-    // Catat hari ini sebagai hari pakai (jika belum dicatat)
-    logTodayUsage(trustedDate) {
-        var today = this.dateToString(trustedDate);
-        var log = this.getUsageLog();
-
-        // Cek apakah hari ini sudah dicatat
-        if (log.indexOf(today) === -1) {
-            log.push(today);
-            this.saveUsageLog(log);
-            console.log('[License] Hari pakai dicatat: ' + today + ' (total: ' + log.length + ' hari)');
-        }
-
-        // Update lastOpenDate
-        localStorage.setItem('cued_money_last_open', trustedDate.toISOString());
-    },
-
-    // Format tanggal jadi string YYYY-MM-DD
-    dateToString(date) {
-        var y = date.getFullYear();
-        var m = String(date.getMonth() + 1).padStart(2, '0');
-        var d = String(date.getDate()).padStart(2, '0');
-        return y + '-' + m + '-' + d;
-    },
-
-    // Hitung jumlah hari yang sudah dipakai
-    getUsedDays() {
-        var log = this.getUsageLog();
-        return log.length;
-    },
 
     // ---------------------------------------------------------
     // ENCODE / DECODE LISENSI
     // ---------------------------------------------------------
 
-    // Generate kode lisensi
+    // Encode angka durasi menjadi kode lisensi unik
     generateCode(days) {
         var timestamp = Date.now();
         var raw = days + '-' + timestamp + '-' + this.SECRET_KEY;
 
+        // Simple hash
         var hash = 0;
         for (var i = 0; i < raw.length; i++) {
             var ch = raw.charCodeAt(i);
@@ -149,14 +38,18 @@ const License = {
         }
         hash = Math.abs(hash);
 
+        // Encode durasi ke huruf
         var daysMap = { 30: 'A', 60: 'B', 90: 'C', 180: 'D', 365: 'E' };
         var daysCode = daysMap[days] || 'X';
 
+        // Buat string untuk checksum (SELALU lowercase)
         var hashStr = hash.toString(36).toLowerCase().substring(0, 3);
         var timeStr = timestamp.toString(36).toLowerCase().substring(0, 4);
 
+        // Hitung checksum dari lowercase
         var part4 = this.checksum(daysCode + hashStr + timeStr);
 
+        // Tampilkan kode dalam UPPERCASE
         var part1 = 'CM';
         var part2 = daysCode + hashStr.toUpperCase();
         var part3 = timeStr.toUpperCase();
@@ -164,7 +57,7 @@ const License = {
         return part1 + '-' + part2 + '-' + part3 + '-' + part4;
     },
 
-    // Checksum
+    // Buat checksum sederhana untuk validasi
     checksum(str) {
         var sum = 0;
         for (var i = 0; i < str.length; i++) {
@@ -173,23 +66,27 @@ const License = {
         return (sum % 9000 + 1000).toString();
     },
 
-    // Decode kode lisensi
+    // Decode kode lisensi, return jumlah hari atau null jika invalid
     decodeCode(code) {
         if (!code) return null;
+
         var parts = code.trim().toUpperCase().split('-');
         if (parts.length !== 4) return null;
         if (parts[0] !== 'CM') return null;
 
+        // Ambil kode durasi
         var daysCode = parts[1].charAt(0);
         var daysMap = { 'A': 30, 'B': 60, 'C': 90, 'D': 180, 'E': 365 };
         var days = daysMap[daysCode];
         if (!days) return null;
 
+        // Checksum: pakai lowercase (sama seperti saat generate)
         var part2rest = parts[1].substring(1).toLowerCase();
         var part3lower = parts[2].toLowerCase();
         var expectedChecksum = this.checksum(daysCode + part2rest + part3lower);
 
         if (parts[3] !== expectedChecksum) return null;
+
         return days;
     },
 
@@ -197,106 +94,105 @@ const License = {
     // PENYIMPANAN & VALIDASI
     // ---------------------------------------------------------
 
+    // Ambil data lisensi dari localStorage
     getLicenseData() {
         var saved = localStorage.getItem(this.LICENSE_STORAGE_KEY);
         if (saved) {
-            try { return JSON.parse(saved); }
-            catch (e) { return null; }
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                return null;
+            }
         }
         return null;
     },
 
+    // Simpan data lisensi ke localStorage
     saveLicenseData(data) {
         localStorage.setItem(this.LICENSE_STORAGE_KEY, JSON.stringify(data));
     },
 
+    // Ambil daftar kode yang sudah dipakai
     getUsedCodes() {
         var saved = localStorage.getItem(this.USED_CODES_KEY);
         if (saved) {
-            try { return JSON.parse(saved); }
-            catch (e) { return []; }
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                return [];
+            }
         }
         return [];
     },
 
+    // Simpan kode ke daftar sudah dipakai
     addUsedCode(code) {
         var used = this.getUsedCodes();
         used.push(code.toUpperCase());
         localStorage.setItem(this.USED_CODES_KEY, JSON.stringify(used));
     },
 
+    // Cek apakah kode sudah pernah dipakai
     isCodeUsed(code) {
         var used = this.getUsedCodes();
         return used.indexOf(code.toUpperCase()) !== -1;
     },
 
-    // Hitung sisa hari berdasarkan hari pakai (BUKAN expire date)
+    // Hitung sisa hari
     getRemainingDays() {
         var data = this.getLicenseData();
-        if (!data || !data.totalDays) return -1;
+        if (!data || !data.expireDate) return -1;
 
-        var usedDays = this.getUsedDays();
-        var remaining = data.totalDays - usedDays;
+        var now = new Date();
+        var expire = new Date(data.expireDate);
+        var diff = expire.getTime() - now.getTime();
+        var days = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
-        return remaining;
+        return days;
     },
 
-    // Aktivasi lisensi — butuh waktu server
-    activateLicense(code, trustedTime) {
+    // Aktivasi lisensi baru
+    activateLicense(code) {
+        // Cek format
         var days = this.decodeCode(code);
         if (!days) {
             alert('❌ Kode lisensi tidak valid!\n\nPastikan kode yang dimasukkan benar.');
             return false;
         }
 
+        // Cek apakah sudah dipakai
         if (this.isCodeUsed(code)) {
             alert('❌ Kode lisensi ini sudah pernah digunakan!\n\nHubungi admin untuk kode baru.');
             return false;
         }
 
+        // Hitung tanggal kadaluarsa
         var data = this.getLicenseData();
-        var existingTotal = 0;
-        var existingUsed = this.getUsedDays();
+        var startDate = new Date();
 
-        // Jika sudah ada lisensi sebelumnya, tambahkan sisa hari
-        if (data && data.totalDays) {
-            var sisaLama = data.totalDays - existingUsed;
-            if (sisaLama > 0) {
-                existingTotal = sisaLama;
+        // Jika masih ada sisa hari, tambahkan dari tanggal expire lama
+        if (data && data.expireDate) {
+            var oldExpire = new Date(data.expireDate);
+            if (oldExpire > startDate) {
+                startDate = oldExpire;
             }
         }
 
-        var newTotalDays = existingTotal + days;
+        var expireDate = new Date(startDate);
+        expireDate.setDate(expireDate.getDate() + days);
 
-        // Reset usage log jika ini aktivasi pertama
-        if (!data) {
-            this.saveUsageLog([]);
-        }
-
-        var activationTime = trustedTime || new Date();
-
+        // Simpan
         this.saveLicenseData({
-            activatedAt: activationTime.toISOString(),
-            totalDays: newTotalDays,
+            activatedAt: new Date().toISOString(),
+            expireDate: expireDate.toISOString(),
             lastCode: code.toUpperCase(),
-            addedDays: days,
-            activationSource: trustedTime ? 'server' : 'local'
+            totalDays: days
         });
 
         this.addUsedCode(code);
 
-        // Catat hari ini sebagai hari pakai
-        this.logTodayUsage(activationTime);
-
         var remaining = this.getRemainingDays();
-
-        var expireEstimate = new Date(activationTime);
-        expireEstimate.setDate(expireEstimate.getDate() + remaining);
-
-        alert('✅ Lisensi berhasil diaktifkan!\n\n'
-            + 'Durasi ditambah: ' + days + ' hari\n'
-            + 'Total sisa hari: ' + remaining + ' hari\n'
-            + 'Estimasi aktif sampai: ' + expireEstimate.toLocaleDateString('id-ID'));
+        alert('✅ Lisensi berhasil diaktifkan!\n\nDurasi: ' + days + ' hari\nMasa aktif sampai: ' + expireDate.toLocaleDateString('id-ID') + '\nSisa hari: ' + remaining + ' hari');
 
         return true;
     },
@@ -307,7 +203,7 @@ const License = {
 
     // Inisialisasi: cek lisensi saat app dibuka
     init() {
-        var self = this;
+        var remaining = this.getRemainingDays();
         var data = this.getLicenseData();
 
         // Belum pernah aktivasi
@@ -316,43 +212,20 @@ const License = {
             return false;
         }
 
-        // Ambil waktu terpercaya lalu cek sisa hari
-        this.getTrustedTime().then(function(trustedTime) {
-            // Catat hari ini sebagai hari pakai
-            self.logTodayUsage(trustedTime);
-
-            var remaining = self.getRemainingDays();
-
-            // Cek apakah tanggal HP mundur
-            var lastOpen = localStorage.getItem('cued_money_last_open');
-            var now = new Date();
-            if (lastOpen && now < new Date(lastOpen)) {
-                console.log('[License] ⚠️ Tanggal HP terdeteksi mundur');
-            }
-
-            // Masa aktif habis
-            if (remaining <= 0) {
-                self.showLockscreen('expired');
-                return;
-            }
-
-            // Peringatan sisa hari
-            if (remaining <= self.WARNING_DAYS) {
-                self.showWarning(remaining);
-            }
-
-            // Tampilkan sisa hari di header
-            self.showRemainingInHeader(remaining);
-        });
-
-        // Return true dulu, async check akan handle lockscreen jika perlu
-        var quickRemaining = this.getRemainingDays();
-        if (quickRemaining <= 0) {
+        // Masa aktif habis
+        if (remaining <= 0) {
             this.showLockscreen('expired');
             return false;
         }
 
-        this.showRemainingInHeader(quickRemaining);
+        // Peringatan sisa hari
+        if (remaining <= this.WARNING_DAYS) {
+            this.showWarning(remaining);
+        }
+
+        // Tampilkan sisa hari di header
+        this.showRemainingInHeader(remaining);
+
         return true;
     },
 
@@ -365,7 +238,7 @@ const License = {
         }
     },
 
-    // Peringatan sisa hari
+    // Tampilkan peringatan sisa hari (tidak mengunci app)
     showWarning(days) {
         setTimeout(function() {
             var html = '<div style="text-align:center;padding:20px 0;">'
@@ -382,7 +255,7 @@ const License = {
         }, 500);
     },
 
-    // Tampilkan lockscreen
+    // Tampilkan lockscreen (app terkunci)
     showLockscreen(reason) {
         var lockEl = document.getElementById('license-lockscreen');
         var appContent = document.getElementById('app-content');
@@ -415,7 +288,7 @@ const License = {
         if (fab) fab.style.display = 'block';
     },
 
-    // Form input lisensi
+    // Form input lisensi (untuk user)
     openInputForm() {
         var html = '<div style="text-align:center;padding:10px 0;">'
             + '<div style="font-size:2rem;margin-bottom:10px;">🔑</div>'
@@ -424,14 +297,13 @@ const License = {
             + '<label class="form-label">KODE LISENSI</label>'
             + '<input type="text" id="f-license-code" class="form-input" placeholder="Contoh: CM-A7X9-K2M4-2025" style="text-align:center;font-family:monospace;font-size:1rem;letter-spacing:2px;text-transform:uppercase;">'
             + '</div>'
-            + '<p style="font-size:0.7rem;color:var(--txt-muted);margin-bottom:15px;">⚠️ Aktivasi memerlukan koneksi internet</p>'
             + '<button class="btn-submit" style="background:var(--clr-bank);color:white;" onclick="License.submitLicense()">✅ AKTIVASI LISENSI</button>'
             + '<div style="margin-top:15px;font-size:0.7rem;color:#555;">Hubungi admin untuk mendapatkan kode lisensi.</div>'
             + '</div>';
         Core.openModal(html);
     },
 
-    // Submit lisensi — pakai waktu server
+    // Submit lisensi dari form input
     submitLicense() {
         var code = document.getElementById('f-license-code').value;
         if (!code || code.trim().length === 0) {
@@ -439,39 +311,24 @@ const License = {
             return;
         }
 
-        var self = this;
-        var btn = document.querySelector('.btn-submit');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = '⏳ Memverifikasi...';
+        var success = this.activateLicense(code.trim());
+        if (success) {
+            Core.closeModal();
+            this.hideLockscreen();
+            Core.refreshUI();
+
+            // Update tampilan header
+            var remaining = this.getRemainingDays();
+            this.showRemainingInHeader(remaining);
         }
-
-        // Ambil waktu dari server untuk aktivasi
-        this.getTrustedTime().then(function(trustedTime) {
-            var success = self.activateLicense(code.trim(), trustedTime);
-
-            if (success) {
-                Core.closeModal();
-                self.hideLockscreen();
-                Core.refreshUI();
-
-                var remaining = self.getRemainingDays();
-                self.showRemainingInHeader(remaining);
-
-                if (window.AppUpdate) AppUpdate.init();
-            } else {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = '✅ AKTIVASI LISENSI';
-                }
-            }
-        });
     },
 
     // Tombol input lisensi dari lockscreen
     lockscreenInput() {
+        // Tutup lockscreen sementara untuk buka modal
         var lockEl = document.getElementById('license-lockscreen');
         if (lockEl) lockEl.style.display = 'none';
+
         this.openInputForm();
     },
 
@@ -489,11 +346,15 @@ const License = {
     adminClickCount: 0,
     adminClickTimer: null,
 
-    // Easter egg: klik logo 5x
+    // Easter egg: klik logo 5x untuk buka admin panel
     handleLogoClick() {
         this.adminClickCount++;
-        if (this.adminClickTimer) clearTimeout(this.adminClickTimer);
 
+        if (this.adminClickTimer) {
+            clearTimeout(this.adminClickTimer);
+        }
+
+        // Reset setelah 3 detik tidak diklik
         this.adminClickTimer = setTimeout(function() {
             License.adminClickCount = 0;
         }, 3000);
@@ -504,7 +365,7 @@ const License = {
         }
     },
 
-    // Login admin
+    // Form login admin
     openAdminLogin() {
         var html = '<div style="text-align:center;padding:10px 0;">'
             + '<div style="font-size:2rem;margin-bottom:10px;">🔐</div>'
@@ -518,37 +379,26 @@ const License = {
         Core.openModal(html);
     },
 
-    // Verifikasi admin
+    // Verifikasi password admin
     verifyAdmin() {
         var pass = document.getElementById('f-admin-pass').value;
         if (pass === this.ADMIN_PASSWORD) {
             Core.closeModal();
-            setTimeout(function() { License.openGenerateForm(); }, 350);
+            setTimeout(function() {
+                License.openGenerateForm();
+            }, 350);
         } else {
             alert('❌ Password salah!');
         }
     },
 
-    // Form generate lisensi
+    // Form generate lisensi (admin only)
     openGenerateForm() {
-        var usageInfo = '';
-        var data = this.getLicenseData();
-        if (data) {
-            var used = this.getUsedDays();
-            var remaining = this.getRemainingDays();
-            usageInfo = '<div style="background:#1a1a1a;padding:12px;border-radius:10px;margin-bottom:15px;font-size:0.75rem;border:1px solid #333;">'
-                + '<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="color:var(--txt-muted);">Total hari lisensi</span><span style="font-weight:700;">' + data.totalDays + ' hari</span></div>'
-                + '<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="color:var(--txt-muted);">Hari terpakai</span><span style="font-weight:700;color:var(--clr-out);">' + used + ' hari</span></div>'
-                + '<div style="display:flex;justify-content:space-between;"><span style="color:var(--txt-muted);">Sisa hari</span><span style="font-weight:700;color:' + (remaining <= 7 ? 'var(--clr-out)' : 'var(--clr-in)') + ';">' + remaining + ' hari</span></div>'
-                + '</div>';
-        }
-
         var html = '<div style="padding:10px 0;">'
             + '<div style="text-align:center;margin-bottom:20px;">'
             + '<div style="font-size:2rem;margin-bottom:5px;">🔐</div>'
             + '<h3 style="color:var(--clr-bank);">Generate Lisensi</h3>'
             + '</div>'
-            + usageInfo
             + '<div class="form-group">'
             + '<label class="form-label">PILIH DURASI</label>'
             + '<select id="f-gen-days" class="form-input">'
@@ -566,12 +416,15 @@ const License = {
             + '<div id="gen-code" style="font-size:1.3rem;font-weight:900;color:var(--clr-bank);font-family:monospace;letter-spacing:3px;margin-bottom:15px;"></div>'
             + '<div id="gen-info" style="font-size:0.7rem;color:var(--txt-muted);margin-bottom:15px;"></div>'
             + '<button onclick="License.copyGeneratedCode()" style="width:100%;padding:12px;background:var(--clr-in);color:black;border:none;border-radius:10px;font-weight:800;font-size:0.8rem;">📋 SALIN KODE</button>'
-            + '</div></div>'
+            + '</div>'
+            + '</div>'
             + '<div style="margin-top:15px;padding-top:15px;border-top:1px solid #333;">'
             + '<div style="font-size:0.7rem;font-weight:800;color:var(--txt-muted);margin-bottom:8px;">RIWAYAT KODE TERPAKAI:</div>'
             + '<div style="max-height:150px;overflow-y:auto;background:#1a1a1a;border-radius:10px;padding:10px;">'
             + License.getUsedCodesHTML()
-            + '</div></div></div>';
+            + '</div>'
+            + '</div>'
+            + '</div>';
         Core.openModal(html);
     },
 
@@ -589,7 +442,7 @@ const License = {
 
     lastGeneratedCode: '',
 
-    // Salin kode
+    // Salin kode yang baru digenerate
     copyGeneratedCode() {
         var code = this.lastGeneratedCode;
         if (!code) return;
@@ -603,8 +456,7 @@ const License = {
             + '1. Buka app CuedMoney\n'
             + '2. Klik "Input Lisensi"\n'
             + '3. Masukkan kode di atas\n'
-            + '4. Pastikan internet aktif\n'
-            + '5. Klik "Aktivasi"\n'
+            + '4. Klik "Aktivasi"\n'
             + '━━━━━━━━━━━━━━━━━━━━━━━━\n'
             + '_CuedMoney Digital_';
 
@@ -619,7 +471,7 @@ const License = {
         }
     },
 
-    // HTML kode terpakai
+    // HTML daftar kode yang sudah dipakai
     getUsedCodesHTML() {
         var used = this.getUsedCodes();
         if (used.length === 0) {

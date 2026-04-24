@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cuedmoney-v1.3.0';
+const CACHE_NAME = 'cuedmoney-v1.4.0';
 const BASE = '/CuedMoney/';
 
 const ASSETS = [
