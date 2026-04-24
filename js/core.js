@@ -3,9 +3,11 @@
 */
 
 const Core = {
-    APP_VERSION: '1.2.2',
+    APP_VERSION: '1.3.0',
     // STATE: Ingatan Aplikasi
     isFormOpen: false,
+    lastDataChange: null,
+    lastBackupDate: null,
 
     state: {
         data: {
@@ -32,6 +34,9 @@ const Core = {
             this.refreshUI();
             console.log("CuedMoney v" + Core.APP_VERSION + " Ready!");
             
+            // Cek status backup saat app dibuka
+            this.checkBackupStatus();
+
             // Inisialisasi sistem lisensi
             if (window.License) {
                 var licenseOK = License.init();
@@ -66,6 +71,14 @@ const Core = {
     saveData() {
         // Simpan seluruh data state ke memori HP
         localStorage.setItem('cued_money_data', JSON.stringify(this.state.data));
+
+        // Catat waktu perubahan data terakhir
+        var now = new Date().toISOString();
+        localStorage.setItem('cued_money_last_change', now);
+        this.lastDataChange = now;
+
+        // Cek apakah perlu tampilkan pengingat backup
+        this.checkBackupStatus();
     },
 
     // FUNGSI SINKRONISASI: Memperbarui semua tampilan serentak
@@ -92,6 +105,70 @@ const Core = {
                 container.classList.add('show');
             }, 10);
         }
+    },
+
+    // ---------------------------------------------------------
+    // BACKUP REMINDER
+    // Fungsi pengingat backup data
+    // ---------------------------------------------------------
+
+    // Cek apakah perlu tampilkan pengingat backup
+    checkBackupStatus() {
+        var lastChange = localStorage.getItem('cued_money_last_change');
+        var lastBackup = localStorage.getItem('cued_money_last_backup');
+
+        if (!lastChange) {
+            this.hideBackupBanner();
+            return;
+        }
+
+        if (!lastBackup || new Date(lastBackup) < new Date(lastChange)) {
+            this.showBackupBanner(lastChange);
+        } else {
+            this.hideBackupBanner();
+        }
+    },
+
+    // Tampilkan banner pengingat backup
+    showBackupBanner(lastChange) {
+        var banner = document.getElementById('backup-banner');
+        if (!banner) return;
+
+        var changeDate = new Date(lastChange);
+        var now = new Date();
+        var diffTime = now.getTime() - changeDate.getTime();
+        var diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        var dateStr = changeDate.toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        });
+
+        var infoEl = document.getElementById('backup-info-text');
+        if (infoEl) {
+            if (diffDays === 0) {
+                infoEl.textContent = 'Perubahan hari ini belum disimpan. Simpan sekarang!';
+            } else if (diffDays === 1) {
+                infoEl.textContent = 'Data belum disimpan sejak kemarin (' + dateStr + ')';
+            } else {
+                infoEl.textContent = 'Data belum disimpan sejak ' + diffDays + ' hari lalu (' + dateStr + ')';
+            }
+        }
+
+        banner.classList.add('show');
+    },
+
+    // Sembunyikan banner backup
+    hideBackupBanner() {
+        var banner = document.getElementById('backup-banner');
+        if (banner) banner.classList.remove('show');
+    },
+
+    // Catat bahwa backup sudah dilakukan
+    markBackupDone() {
+        var now = new Date().toISOString();
+        localStorage.setItem('cued_money_last_backup', now);
+        this.lastBackupDate = now;
+        this.hideBackupBanner();
     },
 
     closeModal() {

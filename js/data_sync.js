@@ -28,6 +28,9 @@ const SyncModule = {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
+        // Catat bahwa backup sudah dilakukan
+        Core.markBackupDone();
+
         alert("Data berhasil diekspor! Silakan amankan file JSON tersebut.");
     },
 
@@ -76,7 +79,38 @@ const SyncModule = {
         // Mulai baca isi file sebagai teks
         reader.readAsText(file);
     }
+,
+
+    // Fungsi Quick Backup — dipanggil dari banner pengingat
+    quickBackup() {
+        var dataToExport = Core.state.data;
+        var dataStr = JSON.stringify(dataToExport, null, 2);
+
+        var blob = new Blob([dataStr], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+
+        // Format nama file: NamaApp_dd_mm_yyyy_HH_mm.json
+        var now = new Date();
+        var dd = String(now.getDate()).padStart(2, '0');
+        var mm = String(now.getMonth() + 1).padStart(2, '0');
+        var yyyy = now.getFullYear();
+        var HH = String(now.getHours()).padStart(2, '0');
+        var min = String(now.getMinutes()).padStart(2, '0');
+        var fileName = 'CuedMoney_' + dd + '_' + mm + '_' + yyyy + '_' + HH + '_' + min + '.json';
+
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Catat bahwa backup sudah dilakukan
+        Core.markBackupDone();
+
+        alert('✅ Data berhasil disimpan!\n\nFile: ' + fileName + '\nLokasi: folder Download');
+    }
 };
 
-// Daftarkan modul ini ke sistem utama
 window.SyncModule = SyncModule;
