@@ -2,7 +2,7 @@
    Fungsi: Cache semua file agar bisa offline
 */
 
-const CACHE_NAME = 'cuedmoney-v1';
+const CACHE_NAME = 'cuedmoney-v1.0.0';
 
 // Semua file yang akan disimpan offline
 const FILES_TO_CACHE = [

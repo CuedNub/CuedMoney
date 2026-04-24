@@ -3,6 +3,7 @@
 */
 
 const Core = {
+    APP_VERSION: '1.0.0',
     // STATE: Ingatan Aplikasi
     isFormOpen: false,
 
@@ -29,7 +30,11 @@ const Core = {
         // selesai dimuat oleh browser sebelum kita menyuruh mereka menggambar tampilan.
         setTimeout(() => {
             this.refreshUI();
-            console.log("CuedMoney Core System Ready!");
+            console.log("CuedMoney v" + Core.APP_VERSION + " Ready!");
+            
+            // Tampilkan versi di header
+            const verEl = document.getElementById('app-version');
+            if (verEl) verEl.textContent = 'v' + Core.APP_VERSION;
         }, 100);
     },
 
