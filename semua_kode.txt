@@ -1,0 +1,2258 @@
+
+========== FILE: index.html ==========
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CuedMoney - Ledger</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="app-header">    
+        <div class="logo">CuedMoney</div>
+        <div class="header-actions">
+            <button onclick="SyncModule.exportData()" class="btn-icon">👆Export</button>
+            <button onclick="document.getElementById('import-file').click()" class="btn-icon">👇Import</button>
+            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="SyncModule.importData(event)">
+        </div>
+    </header>
+
+    <main id="app-content">
+        <section id="dash-liquid-area"></section>
+
+        <section id="dash-debt-area"></section>
+
+        <section id="filter-area"></section>
+
+        <section id="transaction-list-area"></section>
+    </main>
+
+    <button class="fab" onclick="FormUniversal.open()">+</button>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="Core.closeModal()"></div>
+    <div id="modal-container" class="modal-container">
+        <button class="modal-close" onclick="Core.closeModal()">✕</button>
+        <div id="modal-body"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/item_db.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/data_sync.js"></script>
+    <script src="js/dash_liquid.js"></script>
+    <script src="js/dash_debt.js"></script>
+    <script src="js/filter_advanced.js"></script>
+    <script src="js/list_item.js"></script>
+    <script src="js/form_universal.js"></script>
+    <script src="js/form_shopping.js"></script>
+    <script src="js/receipt_digital.js"></script>
+</body>
+</html>
+
+
+========== FILE: css/style.css ==========
+
+/* FILE: css/style.css
+   TEMA: Dark Modern Premium - CuedMoney
+*/
+
+:root {
+    --bg-main: #121212;
+    --bg-card: #1e1e1e;
+    --bg-modal: #252525;
+    --txt-white: #ffffff;
+    --txt-muted: #a0a0a0;
+    
+    /* Warna Aset & Arus */
+    --clr-in: #00e676;    /* Hijau Neon */
+    --clr-out: #ff1744;   /* Merah Terang */
+    --clr-bank: #2979ff;  /* Biru Elektrik */
+    --clr-item: #ff9100;  /* Oranye */
+    
+    --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    --radius: 18px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--txt-white);
+    line-height: 1.5;
+    overflow-x: hidden;
+}
+
+/* HEADER */
+.app-header {
+    background: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid #333;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+.btn-icon {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* DASHBOARD GRID */
+#app-content {
+    padding: 15px;
+    padding-bottom: 100px; /* Jarak untuk FAB */
+}
+
+.dash-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.card-summary {
+    background: var(--bg-card);
+    padding: 15px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.card-full {
+    grid-column: span 2;
+    background: linear-gradient(135deg, #2c3e50, #000);
+    border: 1px solid #444;
+}
+
+.label-small {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--txt-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.val-big {
+    font-size: 1.1rem;
+    font-weight: 900;
+    margin-top: 5px;
+}
+
+/* FILTER */
+.filter-box {
+    margin-bottom: 20px;
+}
+
+.select-custom {
+    width: 100%;
+    background: var(--bg-card);
+    color: white;
+    border: 1px solid #333;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+/* LIST ITEMS */
+.list-item {
+    background: var(--bg-card);
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid transparent;
+    transition: transform 0.2s;
+}
+
+.list-item:active { transform: scale(0.98); }
+
+.item-info { flex: 1; }
+.item-date { font-size: 0.6rem; color: var(--txt-muted); }
+.item-desc { font-size: 0.85rem; font-weight: 700; margin: 2px 0; }
+.item-cat { font-size: 0.65rem; color: var(--clr-bank); font-weight: 800; }
+
+.item-right { text-align: right; }
+.item-amt { font-size: 1rem; font-weight: 900; }
+.item-actions { margin-top: 5px; display: flex; gap: 10px; justify-content: flex-end; }
+
+/* WARNA DINAMIS */
+.border-in { border-left-color: var(--clr-in); }
+.border-out { border-left-color: var(--clr-out); }
+.border-item { border-left-color: var(--clr-item); }
+
+.txt-in { color: var(--clr-in); }
+.txt-out { color: var(--clr-out); }
+.txt-item { color: var(--clr-item); }
+
+/* FLOATING BUTTON */
+.fab {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background: var(--clr-bank);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 2rem;
+    box-shadow: 0 8px 25px rgba(41, 121, 255, 0.5);
+    z-index: 99;
+}
+
+/* MODAL */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+}
+
+.modal-container {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; width: 100%;
+    background: var(--bg-modal);
+    border-radius: 25px 25px 0 0;
+    padding: 25px;
+    z-index: 1001;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-container.show {
+    display: block;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px; right: 20px;
+    background: none; border: none; color: white; font-size: 1.2rem;
+}
+
+/* FORM STYLING */
+.form-group { margin-bottom: 15px; }
+.form-label { font-size: 0.7rem; font-weight: 800; color: var(--txt-muted); display: block; margin-bottom: 5px; }
+.form-input {
+    width: 100%;
+    background: #333;
+    border: 1px solid #444;
+    color: white;
+    padding: 14px;
+    border-radius: 12px;
+    outline: none;
+}
+.btn-submit {
+    width: 100%;
+    background: white;
+    color: black;
+    border: none;
+    padding: 16px;
+    border-radius: 15px;
+    font-weight: 900;
+    margin-top: 10px;
+}
+
+
+========== FILE: js/core.js ==========
+
+/* FILE: js/core.js
+   FUNGSI: Mandor Utama, Manajemen State, dan Pengendali UI
+*/
+
+const Core = {
+    // STATE: Ingatan Aplikasi
+    state: {
+        data: {
+            transactions: [], // Buku Besar Utama (Semua mutasi kumpul di sini)
+            accounts: [
+                // Akun default (Dompet Saku) tidak bisa dihapus
+                { id: 'wallet_cash', name: 'Dompet Saku', type: 'wallet', balance: 0 }
+            ],
+            price_memory: {} // Memori harga untuk form belanja / kasir
+        },
+        filters: {
+            category: 'all', // all, liquid (bank/dompet), debt (hutang)
+            flow: 'all',     // all, in (+), out (-)
+            search: ''       // Kata kunci pencarian
+        }
+    },
+
+    init() {
+        this.loadData();
+        
+        // Memberi sedikit jeda agar semua file js lain (engine, dashboard, dll)
+        // selesai dimuat oleh browser sebelum kita menyuruh mereka menggambar tampilan.
+        setTimeout(() => {
+            this.refreshUI();
+            console.log("CuedMoney Core System Ready!");
+        }, 100);
+    },
+
+    loadData() {
+        const saved = localStorage.getItem('cued_money_data');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            // Digabung dengan aman agar struktur data tidak pecah
+            this.state.data.transactions = parsed.transactions || [];
+            this.state.data.accounts = parsed.accounts || [{ id: 'wallet_cash', name: 'Dompet Saku', type: 'wallet', balance: 0 }];
+            this.state.data.price_memory = parsed.price_memory || {};
+        }
+    },
+
+    saveData() {
+        // Simpan seluruh data state ke memori HP
+        localStorage.setItem('cued_money_data', JSON.stringify(this.state.data));
+    },
+
+    // FUNGSI SINKRONISASI: Memperbarui semua tampilan serentak
+    refreshUI() {
+        if (window.DashLiquid) DashLiquid.render();
+        if (window.DashDebt) DashDebt.render();
+        if (window.FilterAdvanced) FilterAdvanced.render();
+        if (window.ListItem) ListItem.render();
+    },
+
+    // FUNGSI MODAL: Untuk memunculkan formulir atau struk melayang
+    openModal(htmlContent) {
+        const body = document.getElementById('modal-body');
+        const container = document.getElementById('modal-container');
+        const overlay = document.getElementById('modal-overlay');
+
+        if (body && container && overlay) {
+            body.innerHTML = htmlContent;
+            overlay.style.display = 'block';
+            
+            // Jeda 10ms agar animasi CSS slide-up berjalan mulus
+            setTimeout(() => {
+                container.classList.add('show');
+            }, 10);
+        }
+    },
+
+    closeModal() {
+        const container = document.getElementById('modal-container');
+        const overlay = document.getElementById('modal-overlay');
+
+        if (container && overlay) {
+            container.classList.remove('show');
+            
+            // Tunggu animasi turun selesai (300ms) baru hilangkan overlay
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.getElementById('modal-body').innerHTML = ''; // Bersihkan memori tampilan modal
+            }, 300); 
+        }
+    }
+};
+
+// Jalankan Mandor saat halaman HTML sudah siap sepenuhnya
+document.addEventListener('DOMContentLoaded', () => {
+    Core.init();
+});
+
+
+========== FILE: js/engine.js ==========
+
+/* FILE: js/engine.js
+   VERSI: 3.5 (SPECIAL REVERSE LOGIC)
+   FUNGSI: Mesin Kalkulator & Universal Ledger
+   UPDATE: Mendukung pemotongan saldo otomatis saat bayar cicilan barang.
+*/
+
+const Engine = {
+    processTransaction({ type, accountId, amount, category, relation, note }) {
+        const amt = parseFloat(amount) || 0;
+        if (amt <= 0) {
+            alert("Nominal tidak valid!");
+            return false;
+        }
+
+        const tx = {
+            id: Date.now(),
+            date: new Date().toLocaleString('id-ID'),
+            timestamp: new Date().getTime(),
+            type: type,         
+            accountId: accountId, 
+            amount: amt,
+            category: category, 
+            relation: relation || '-', 
+            note: note || '-'
+        };
+
+        // 1. Simpan ke Buku Besar
+        Core.state.data.transactions.unshift(tx);
+
+        // 2. LOGIKA SALDO BANK/DOMPET (LOGIKA PINTAR)
+        if (accountId) {
+            const acc = Core.state.data.accounts.find(a => a.id === accountId);
+            if (acc) {
+                // KONDISI KHUSUS: Tanggungan Barang
+                // Jika Bayar Cicilan (in), maka saldo bank harus BERKURANG (-)
+                if (category === 'tanggungan') {
+                    if (type === 'in') {
+                        acc.balance -= amt; // Bayar cicilan = uang keluar dari bank
+                    } else {
+                        // Jika ambil barang baru tapi iseng pilih bank (sangat jarang)
+                        // kita biarkan saja atau tidak lakukan apa-apa.
+                    }
+                } 
+                // KONDISI NORMAL: (Bank, Dompet, Hutang Uang, Piutang Uang)
+                else {
+                    if (type === 'in') acc.balance += amt;
+                    if (type === 'out') acc.balance -= amt;
+                }
+            }
+        }
+
+        Core.saveData();
+        Core.refreshUI();
+        return true;
+    },
+
+    processTransfer(fromId, toId, amount, adminFee = 0) {
+        const amt = parseFloat(amount) || 0;
+        const adm = parseFloat(adminFee) || 0;
+        if (amt <= 0) return false;
+
+        const fromAcc = Core.state.data.accounts.find(a => a.id === fromId);
+        const toAcc = Core.state.data.accounts.find(a => a.id === toId);
+
+        if (!fromAcc || !toAcc) return false;
+        if (fromAcc.balance < (amt + adm)) {
+            alert("Saldo tidak cukup!");
+            return false;
+        }
+
+        fromAcc.balance -= (amt + adm);
+        toAcc.balance += amt;
+
+        const ts = new Date().getTime();
+        const dateStr = new Date().toLocaleString('id-ID');
+
+        Core.state.data.transactions.unshift({
+            id: ts, date: dateStr, timestamp: ts,
+            type: 'out', accountId: fromId, amount: amt + adm,
+            category: 'transfer', relation: `Ke ${toAcc.name}`, note: 'Transfer Keluar'
+        });
+
+        Core.state.data.transactions.unshift({
+            id: ts + 1, date: dateStr, timestamp: ts + 1,
+            type: 'in', accountId: toId, amount: amt,
+            category: 'transfer', relation: `Dari ${fromAcc.name}`, note: 'Transfer Masuk'
+        });
+
+        Core.saveData();
+        Core.refreshUI();
+        return true;
+    },
+
+    deleteTransaction(id) {
+        const txIndex = Core.state.data.transactions.findIndex(t => t.id === id);
+        if (txIndex === -1) return;
+        const tx = Core.state.data.transactions[txIndex];
+
+        if (tx.accountId) {
+            const acc = Core.state.data.accounts.find(a => a.id === tx.accountId);
+            if (acc) {
+                // Kembalikan saldo sesuai logika terbalik tadi
+                if (tx.category === 'tanggungan') {
+                    if (tx.type === 'in') acc.balance += tx.amount;
+                } else {
+                    if (tx.type === 'in') acc.balance -= tx.amount;
+                    if (tx.type === 'out') acc.balance += tx.amount;
+                }
+            }
+        }
+
+        Core.state.data.transactions.splice(txIndex, 1);
+        Core.saveData();
+        Core.refreshUI();
+    },
+
+    getLiquidStats() {
+        let totalWallet = 0; let totalBank = 0;
+        Core.state.data.accounts.forEach(acc => {
+            if (acc.type === 'wallet') totalWallet += acc.balance;
+            if (acc.type === 'bank') totalBank += acc.balance;
+        });
+        return { wallet: totalWallet, bank: totalBank, total: totalWallet + totalBank, accounts: Core.state.data.accounts };
+    },
+
+    getDebtStats() {
+        let sisaPiutang = 0; let sisaHutang = 0; let sisaBarang = 0;
+        Core.state.data.transactions.forEach(tx => {
+            if (tx.category === 'piutang') {
+                if (tx.type === 'out') sisaPiutang += tx.amount;
+                if (tx.type === 'in') sisaPiutang -= tx.amount;
+            }
+            if (tx.category === 'hutang') {
+                if (tx.type === 'in') sisaHutang += tx.amount;
+                if (tx.type === 'out') sisaHutang -= tx.amount;
+            }
+            if (tx.category === 'tanggungan') {
+                if (tx.type === 'out') sisaBarang += tx.amount; // Tambah Beban
+                if (tx.type === 'in') sisaBarang -= tx.amount;  // Kurangi Beban (Cicilan)
+            }
+        });
+        return { piutang: sisaPiutang, hutang: sisaHutang, barang: sisaBarang };
+    },
+
+    addAccount(name, initialBalance) {
+        Core.state.data.accounts.push({ id: 'bank_' + Date.now(), name: name, type: 'bank', balance: parseFloat(initialBalance) || 0 });
+        Core.saveData(); Core.refreshUI();
+    },
+
+    deleteAccount(id) {
+        if (id === 'wallet_cash') return;
+        Core.state.data.accounts = Core.state.data.accounts.filter(a => a.id !== id);
+        Core.saveData(); Core.refreshUI();
+    }
+};
+
+window.Engine = Engine;
+
+
+========== FILE: js/item_db.js ==========
+
+/* FILE: js/item_db.js
+   FUNGSI: Manajemen Library Barang (Master Data)
+*/
+
+const ItemDB = {
+    init() {
+        if (!Core.state.data.items_library) {
+            Core.state.data.items_library = [];
+            Core.saveData();
+        }
+    },
+
+    openManager() {
+        this.init();
+        const items = Core.state.data.items_library;
+        let listHtml = items.map((item, index) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333;">
+                <div>
+                    <div style="font-weight: bold;">${item.name}</div>
+                    <div style="color: var(--clr-in); font-size: 0.85rem;">Rp ${item.price.toLocaleString('id-ID')}</div>
+                </div>
+                <div>
+                    <button onclick="ItemDB.editItem(${index})" style="background: none; border: none; color: var(--clr-bank);">✏️</button>
+                    <button onclick="ItemDB.deleteItem(${index})" style="background: none; border: none; color: var(--clr-out);">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+
+        const html = `
+            <h3>📦 Database Barang</h3>
+            <div style="margin-bottom: 15px; background: #222; padding: 10px; border-radius: 8px;">
+                <input type="text" id="db-item-name" class="form-input" placeholder="Nama Barang Baru..." style="margin-bottom: 5px;">
+                <input type="number" id="db-item-price" class="form-input" placeholder="Harga Default (Rp)...">
+                <button class="btn-submit" onclick="ItemDB.addItem()" style="margin-top: 10px;">+ TAMBAH BARANG</button>
+            </div>
+            <div style="max-height: 250px; overflow-y: auto;">
+                ${listHtml || '<p style="text-align: center; color: #666;">Belum ada barang tersimpan.</p>'}
+            </div>
+        `;
+        Core.openModal(html);
+    },
+
+    addItem() {
+        const name = document.getElementById('db-item-name').value;
+        const price = parseFloat(document.getElementById('db-item-price').value) || 0;
+        if (!name || price <= 0) return alert("Isi nama dan harga!");
+
+        Core.state.data.items_library.push({
+            id: Date.now(),
+            name: name,
+            price: price
+        });
+        Core.saveData();
+        this.openManager();
+    },
+
+    deleteItem(index) {
+        if (confirm("Hapus barang ini dari database?")) {
+            Core.state.data.items_library.splice(index, 1);
+            Core.saveData();
+            this.openManager();
+        }
+    },
+
+    editItem(index) {
+        const item = Core.state.data.items_library[index];
+        const newPrice = prompt(`Ubah harga untuk ${item.name}:`, item.price);
+        if (newPrice !== null) {
+            Core.state.data.items_library[index].price = parseFloat(newPrice) || 0;
+            Core.saveData();
+            this.openManager();
+        }
+    }
+};
+
+
+========== FILE: js/form_universal.js ==========
+
+/* FILE: js/form_universal.js
+   VERSI: 4.0 (EDISI SMART FORM)
+   FITUR: ID Otomatis, DateTime Otomatis, Datalist Nama, & Multiline Note
+*/
+
+const FormUniversal = {
+
+    // =========================================================
+    // ★ AWAL CUSTOM FUNCTIONS FormUniversal
+    // Total: 16 custom functions
+    // Kelompok: Helper, Debt, Bank, Transfer, Cash, Edit, Menu
+    // =========================================================
+
+
+
+    // ---------------------------------------------------------
+    // HELPER / UTILITY
+    // Fungsi bantu yang dipakai oleh function lain
+    // ---------------------------------------------------------
+
+    // Membuat datalist nama orang/toko dari data transaksi lama
+    getRelationDatalist() {
+        const transactions = Core.state.data.transactions || [];
+        const uniqueNames = [...new Set(transactions.map(t => t.relation))].filter(n => n && n !== '-');
+        let options = '';
+        uniqueNames.forEach(name => {
+            options += `<option value="${name}">`;
+        });
+        return `<datalist id="list-orang">${options}</datalist>`;
+    },
+
+    // Membuat option daftar rekening untuk elemen <select>
+    // Parameter excludeId: ID rekening yang ingin disembunyikan dari daftar
+    getAccountOptions(excludeId = null) {
+        let options = '';
+        const accounts = Core.state.data.accounts || [];
+        accounts.forEach(acc => {
+            if (acc.id !== excludeId) {
+                const icon = acc.type === 'wallet' ? '💰' : '🏦';
+                options += `<option value="${acc.id}">${icon} ${acc.name} (Rp ${acc.balance.toLocaleString('id-ID')})</option>`;
+            }
+        });
+        return options;
+    },
+
+
+
+    // ---------------------------------------------------------
+    // DEBT / HUTANG / PIUTANG / TANGGUNGAN
+    // Form untuk input dan simpan data hutang, piutang, barang
+    // ---------------------------------------------------------
+
+    // Membuka form hutang/piutang/tanggungan
+    openDebt() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+
+        // Format untuk input datetime-local: YYYY-MM-DDTHH:mm
+        const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        const autoID = `TX-${Date.now()}`;
+
+        const html = `
+            <h3 style="margin-bottom: 15px;">Hutang / Piutang / Barang</h3>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label class="form-label">ID TRANSAKSI</label>
+                    <input type="text" id="f-debt-id" class="form-input" value="${autoID}" readonly style="background: #222; color: var(--clr-bank); font-family: monospace;">
+                </div>
+                <div style="flex: 1;">
+                    <label class="form-label">TANGGAL & WAKTU</label>
+                    <input type="datetime-local" id="f-debt-date" class="form-input" value="${currentDateTime}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">JENIS MUTASI</label>
+                <select id="f-debt-type" class="form-input" onchange="FormUniversal.updateDebtUI()">
+                    <option value="piutang">🤝 Piutang (Uang Saya di Orang)</option>
+                    <option value="hutang">⚠️ Hutang (Uang Orang di Saya)</option>
+                    <option value="tanggungan">📦 Tanggungan Barang</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="f-debt-action-group">
+                <label class="form-label">AKSI / SUB-TIPE</label>
+                <select id="f-debt-action" class="form-input" onchange="FormUniversal.updateDebtUI()">
+                    <option value="out">MEMBERI / AMBIL BARANG (Beban -)</option>
+                    <option value="in">MENERIMA / BAYAR CICILAN (Beban +)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="f-debt-acc-group">
+                <label class="form-label" id="f-debt-acc-label">REKENING TERKAIT</label>
+                <select id="f-debt-acc" class="form-input">
+                    <option value="">-- Tanpa Rekening (Non-Tunai) --</option>
+                    ${this.getAccountOptions()}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">NAMA ORANG / TOKO</label>
+                <input type="text" id="f-debt-person" class="form-input" placeholder="Ketik atau pilih nama..." list="list-orang">
+                ${this.getRelationDatalist()}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">NOMINAL (Rp)</label>
+                <input type="number" id="f-debt-amt" class="form-input" placeholder="0">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">CATATAN</label>
+                <textarea id="f-debt-note" class="form-input" style="height: 80px; resize: vertical;" placeholder="Tulis rincian... (bisa pindah baris)"></textarea>
+            </div>
+
+            <button class="btn-submit" onclick="FormUniversal.saveDebt()">SIMPAN DATA</button>
+        `;
+        Core.openModal(html);
+        this.updateDebtUI();
+    },
+
+    // Mengubah tampilan form hutang sesuai jenis dan aksi yang dipilih
+    updateDebtUI() {
+        const type = document.getElementById('f-debt-type').value;
+        const action = document.getElementById('f-debt-action').value;
+        const actionGroup = document.getElementById('f-debt-action-group');
+        const accGroup = document.getElementById('f-debt-acc-group');
+        const accLabel = document.getElementById('f-debt-acc-label');
+        const actionSelect = document.getElementById('f-debt-action');
+
+        actionGroup.style.display = 'block';
+
+        if (type === 'tanggungan') {
+            actionSelect.options[0].text = "Ambil Barang Baru (Hutang Bertambah)";
+            actionSelect.options[1].text = "Bayar Cicilan Barang (Uang Keluar -)";
+            accGroup.style.display = (action === 'in') ? 'block' : 'none';
+            accLabel.innerText = "BAYAR PAKAI REKENING";
+        } else {
+            accGroup.style.display = 'block';
+            accLabel.innerText = (action === 'out') ? 'GUNAKAN SALDO DARI' : 'SIMPAN KE SALDO';
+
+            if (type === 'piutang') {
+                actionSelect.options[0].text = "Memberi Pinjaman (Keluar -)";
+                actionSelect.options[1].text = "Terima Cicilan (Masuk +)";
+            } else {
+                actionSelect.options[0].text = "Membayar Hutang (Keluar -)";
+                actionSelect.options[1].text = "Terima Pinjaman (Masuk +)";
+            }
+        }
+    },
+
+    // Menyimpan data hutang/piutang/tanggungan ke Engine
+    saveDebt() {
+        const type = document.getElementById('f-debt-type').value;
+        const action = document.getElementById('f-debt-action').value;
+        const accId = document.getElementById('f-debt-acc').value;
+        const person = document.getElementById('f-debt-person').value;
+        const amt = document.getElementById('f-debt-amt').value;
+        const note = document.getElementById('f-debt-note').value;
+        const customDate = document.getElementById('f-debt-date').value;
+
+        if (!person || !amt || amt <= 0) return alert("Data tidak lengkap!");
+
+        const success = Engine.processTransaction({
+            type: action,
+            accountId: accId || null,
+            amount: amt,
+            category: type,
+            relation: person,
+            note: note,
+            customDate: customDate ? new Date(customDate).toLocaleString('id-ID') : null
+        });
+
+        if (success) Core.closeModal();
+    },
+
+
+
+    // ---------------------------------------------------------
+    // ACCOUNT / REKENING
+    // Form untuk menambah rekening baru
+    // ---------------------------------------------------------
+
+    // Membuka form tambah rekening
+    openAddBank() {
+        const html = `
+            <h3>Tambah Rekening</h3>
+            <div class="form-group">
+                <label class="form-label">NAMA BANK / E-WALLET</label>
+                <input type="text" id="f-bank-name" class="form-input" placeholder="Contoh: BCA, OVO...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">SALDO AWAL (Rp)</label>
+                <input type="number" id="f-bank-bal" class="form-input" placeholder="0">
+            </div>
+            <button class="btn-submit" onclick="FormUniversal.saveBank()">SIMPAN REKENING</button>
+        `;
+        Core.openModal(html);
+    },
+
+    // Menyimpan rekening baru ke Engine
+    saveBank() {
+        const name = document.getElementById('f-bank-name').value;
+        const bal = document.getElementById('f-bank-bal').value;
+        if (!name) return alert("Nama Bank harus diisi!");
+        Engine.addAccount(name, bal);
+        Core.closeModal();
+    },
+
+
+
+    // ---------------------------------------------------------
+    // TRANSFER ANTAR REKENING
+    // Form untuk transfer saldo dari satu rekening ke rekening lain
+    // ---------------------------------------------------------
+
+    // Membuka form transfer
+    openTransfer() {
+        const html = `
+            <h3>Transfer Antar Bank</h3>
+            <div class="form-group">
+                <label class="form-label">DARI REKENING</label>
+                <select id="f-tf-src" class="form-input">${this.getAccountOptions()}</select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">KE REKENING</label>
+                <select id="f-tf-dst" class="form-input">${this.getAccountOptions()}</select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">NOMINAL (Rp)</label>
+                <input type="number" id="f-tf-amt" class="form-input" placeholder="0">
+            </div>
+            <button class="btn-submit" style="background: var(--clr-bank); color: white;" onclick="FormUniversal.saveTransfer()">KIRIM UANG</button>
+        `;
+        Core.openModal(html);
+    },
+
+    // Menjalankan proses transfer antar rekening
+    saveTransfer() {
+        const src = document.getElementById('f-tf-src').value;
+        const dst = document.getElementById('f-tf-dst').value;
+        const amt = document.getElementById('f-tf-amt').value;
+        if (src === dst) return alert("Rekening tidak boleh sama!");
+        if (Engine.processTransfer(src, dst, amt)) Core.closeModal();
+    },
+
+
+
+    // ---------------------------------------------------------
+    // CASH MOVEMENT / TARIK TUNAI & SETOR TUNAI
+    // Form untuk memindahkan saldo antara rekening dan dompet cash
+    // ---------------------------------------------------------
+
+    // Membuka form tarik tunai (dari rekening ke dompet cash)
+    openTarik() {
+        const html = `
+            <h3>Tarik Tunai</h3>
+            <div class="form-group">
+                <label class="form-label">DARI REKENING</label>
+                <select id="f-tarik-src" class="form-input">${this.getAccountOptions('wallet_cash')}</select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">NOMINAL (Rp)</label>
+                <input type="number" id="f-tarik-amt" class="form-input" placeholder="0">
+            </div>
+            <button class="btn-submit" style="background: #ff9800; color: white;" onclick="FormUniversal.saveTarik()">TARIK</button>
+        `;
+        Core.openModal(html);
+    },
+
+    // Menjalankan proses tarik tunai
+    saveTarik() {
+        const src = document.getElementById('f-tarik-src').value;
+        const amt = document.getElementById('f-tarik-amt').value;
+        if (Engine.processTransfer(src, 'wallet_cash', amt)) Core.closeModal();
+    },
+
+    // Membuka form setor tunai (dari dompet cash ke rekening)
+    openSetor() {
+        const html = `
+            <h3>Setor Tunai</h3>
+            <div class="form-group">
+                <label class="form-label">KE REKENING</label>
+                <select id="f-setor-dst" class="form-input">${this.getAccountOptions('wallet_cash')}</select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">NOMINAL (Rp)</label>
+                <input type="number" id="f-setor-amt" class="form-input" placeholder="0">
+            </div>
+            <button class="btn-submit" style="background: var(--clr-in); color: black;" onclick="FormUniversal.saveSetor()">SETOR</button>
+        `;
+        Core.openModal(html);
+    },
+
+    // Menjalankan proses setor tunai
+    saveSetor() {
+        const dst = document.getElementById('f-setor-dst').value;
+        const amt = document.getElementById('f-setor-amt').value;
+        if (Engine.processTransfer('wallet_cash', dst, amt)) Core.closeModal();
+    },
+
+
+
+    // ---------------------------------------------------------
+    // EDIT TRANSACTION
+    // Form untuk mengedit nama dan catatan transaksi yang sudah ada
+    // ---------------------------------------------------------
+
+    // Membuka form edit transaksi berdasarkan ID
+    openEdit(id) {
+        const tx = Core.state.data.transactions.find(t => t.id === id);
+        if (!tx) return;
+        const html = `
+            <h3>Edit Keterangan</h3>
+            <div class="form-group">
+                <label class="form-label">NAMA</label>
+                <input type="text" id="f-edit-person" class="form-input" value="${tx.relation}" list="list-orang">
+                ${this.getRelationDatalist()}
+            </div>
+            <div class="form-group">
+                <label class="form-label">CATATAN</label>
+                <textarea id="f-edit-note" class="form-input" style="height: 100px; resize: vertical;">${tx.note}</textarea>
+            </div>
+            <button class="btn-submit" onclick="FormUniversal.saveEdit(${id})">SIMPAN</button>`;
+        Core.openModal(html);
+    },
+
+    // Menyimpan hasil edit nama dan catatan transaksi
+    saveEdit(id) {
+        const tx = Core.state.data.transactions.find(t => t.id === id);
+        if (tx) {
+            tx.relation = document.getElementById('f-edit-person').value || '-';
+            tx.note = document.getElementById('f-edit-note').value || '-';
+            Core.saveData(); Core.refreshUI(); Core.closeModal();
+        }
+    },
+
+
+
+    // ---------------------------------------------------------
+    // MAIN MENU
+    // Menu utama untuk memilih jenis transaksi
+    // ---------------------------------------------------------
+
+    // Membuka menu utama transaksi (Masuk, Keluar, Transfer, Hutang)
+    open() {
+        const html = `
+            <div style="text-align: center; margin-bottom: 20px;"><h3>Menu Transaksi</h3></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button onclick="Core.closeModal(); setTimeout(()=>FormShopping.open('in'), 350)" style="background: var(--bg-card); border: 1px solid var(--clr-in); color: white; padding: 20px; border-radius: 18px;">⬇️ Masuk</button>
+                <button onclick="Core.closeModal(); setTimeout(()=>FormShopping.open('out'), 350)" style="background: var(--bg-card); border: 1px solid var(--clr-out); color: white; padding: 20px; border-radius: 18px;">⬆️ Keluar</button>
+                <button onclick="FormUniversal.openTransfer()" style="background: var(--bg-card); border: 1px solid var(--clr-bank); color: white; padding: 20px; border-radius: 18px;">🔄 Transfer</button>
+                <button onclick="FormUniversal.openDebt()" style="background: var(--bg-card); border: 1px solid var(--clr-item); color: white; padding: 20px; border-radius: 18px;">📝 Hutang</button>
+            </div>
+        `;
+        Core.openModal(html);
+    }
+
+
+
+    // =========================================================
+    // ★ AKHIR CUSTOM FUNCTIONS FormUniversal
+    // Total: 16 custom functions
+    // =========================================================
+};
+
+// Mendaftarkan object ke global agar bisa dipanggil dari HTML
+window.FormUniversal = FormUniversal;
+
+========== FILE: js/form_shopping.js ==========
+
+/* FILE: js/form_shopping.js - VERSI 2.7 (SUPPORT MULTI-PRICE) */
+
+const FormShopping = {
+    items: [],
+
+    // Menampilkan Nama + Harga di daftar saran
+    getItemLibraryHTML() {
+        const libs = Core.state.data.items_library || [];
+        return `<datalist id="lib-barang">
+            ${libs.map(it => `<option value="${it.name} | Rp ${it.price.toLocaleString('id-ID')}">`).join('')}
+        </datalist>`;
+    },
+
+    // Logika Otomatis saat barang dipilih
+    autoFillPrice(val) {
+        // Jika user memilih dari dropdown (format: "Nama | Rp Harga")
+        if (val.includes(" | Rp ")) {
+            const parts = val.split(" | Rp ");
+            const pureName = parts[0];
+            const purePrice = parts[1].replace(/\./g, ''); // Hilangkan titik ribuan
+
+            // Set Nama (bersihkan dari embel-embel harga)
+            const nameInput = document.getElementById('f-c-name') || document.getElementById('f-q-name');
+            if (nameInput) nameInput.value = pureName;
+
+            // Set Harga
+            const priceInput = document.getElementById('f-c-price') || document.getElementById('f-q-price');
+            if (priceInput) {
+                priceInput.value = purePrice;
+                if (document.getElementById('f-q-price')) this.syncQuickTotal();
+            }
+        }
+    },
+
+    open(type = 'out') {
+        this.items = [];
+        const now = new Date();
+        const currentDateTime = now.toISOString().slice(0, 16);
+
+        const html = `
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-right: 40px;">
+                <h3 style="color: ${type === 'in' ? 'var(--clr-in)' : 'var(--clr-out)'}; margin: 0;">
+                    ${type === 'in' ? '⬇️ Masuk' : '⬆️ Belanja'}
+                </h3>
+                <button onclick="ItemDB.openManager()" style="background: rgba(255,255,255,0.05); border: 1px solid #444; color: #888; font-size: 0.65rem; border-radius: 6px; padding: 4px 8px;">
+                    📦 DB BARANG
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">TANGGAL & WAKTU</label>
+                <input type="datetime-local" id="f-shop-date" class="form-input" value="${currentDateTime}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">SUMBER SALDO</label>
+                <select id="f-shop-acc" class="form-input">${FormUniversal.getAccountOptions()}</select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">MODE PENCATATAN</label>
+                <select id="f-shop-mode" class="form-input" onchange="FormShopping.renderUI()">
+                    <option value="cashier">Mode Kasir (Banyak Barang)</option>
+                    <option value="quick">Mode Cepat (1 Barang)</option>
+                </select>
+            </div>
+
+            <div id="shop-dynamic-area"></div>
+            ${this.getItemLibraryHTML()}
+
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #444;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="color: #aaa; font-weight: bold;">TOTAL:</span>
+                    <span id="shop-total-label" style="font-size: 1.2rem; font-weight: bold; color: var(--clr-out);">Rp 0</span>
+                </div>
+                
+                <div id="cashier-calc-area">
+                    <div class="form-group">
+                        <label class="form-label" style="color: var(--clr-bank);">NOMINAL BAYAR (Rp)</label>
+                        <input type="number" id="f-shop-pay" class="form-input" placeholder="0" oninput="FormShopping.updateChange()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">KEMBALIAN</label>
+                        <input type="text" id="f-shop-change" class="form-input" value="Rp 0" readonly style="background: #111; color: var(--clr-in);">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-submit" style="background: ${type === 'in' ? 'var(--clr-in)' : 'var(--clr-out)'};" onclick="FormShopping.save('${type}')">
+                SIMPAN TRANSAKSI
+            </button>
+        `;
+        Core.openModal(html);
+        this.renderUI();
+    },
+
+    renderUI() {
+        const mode = document.getElementById('f-shop-mode').value;
+        const area = document.getElementById('shop-dynamic-area');
+        const calcArea = document.getElementById('cashier-calc-area');
+
+        if (mode === 'quick') {
+            calcArea.style.display = 'none';
+            area.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">NAMA BARANG</label>
+                    <input type="text" id="f-q-name" class="form-input" list="lib-barang" oninput="FormShopping.autoFillPrice(this.value)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">HARGA (Rp)</label>
+                    <input type="number" id="f-q-price" class="form-input" oninput="FormShopping.syncQuickTotal()">
+                </div>
+            `;
+        } else {
+            calcArea.style.display = 'block';
+            area.innerHTML = `
+                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid #333;">
+                    <label class="form-label" style="color: var(--clr-item); font-size: 0.7rem;">INPUT BARANG</label>
+                    <input type="text" id="f-c-name" class="form-input" placeholder="Ketik nama..." list="lib-barang" oninput="FormShopping.autoFillPrice(this.value)" style="margin-bottom: 8px;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="f-c-price" class="form-input" placeholder="Harga" style="flex: 2;">
+                        <input type="number" id="f-c-qty" class="form-input" value="1" style="flex: 1;">
+                        <button onclick="FormShopping.addItem()" style="background: var(--clr-bank); border: none; border-radius: 8px; width: 40px; color: white;">+</button>
+                    </div>
+                    <div id="cart-list" style="margin-top: 10px; max-height: 120px; overflow-y: auto;"></div>
+                </div>
+            `;
+            this.updateCartUI();
+        }
+    },
+
+    addItem() {
+        const name = document.getElementById('f-c-name').value;
+        const price = parseFloat(document.getElementById('f-c-price').value) || 0;
+        const qty = parseInt(document.getElementById('f-c-qty').value) || 1;
+        if (!name || price <= 0) return;
+        this.items.push({ name, price, qty, total: price * qty });
+        document.getElementById('f-c-name').value = '';
+        document.getElementById('f-c-price').value = '';
+        document.getElementById('f-c-qty').value = '1';
+        this.updateCartUI();
+    },
+
+    removeItem(index) {
+        this.items.splice(index, 1);
+        this.updateCartUI();
+    },
+
+    updateCartUI() {
+        const list = document.getElementById('cart-list');
+        let total = 0;
+        list.innerHTML = this.items.map((it, i) => {
+            total += it.total;
+            return `<div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; border-bottom: 1px solid #222;">
+                <span>${it.name} <small>(x${it.qty})</small></span>
+                <span>Rp ${it.total.toLocaleString('id-ID')} <span onclick="FormShopping.removeItem(${i})" style="color:var(--clr-out); margin-left:8px;">✕</span></span>
+            </div>`;
+        }).join('') || '<div style="color:#444; font-size:0.8rem; text-align:center;">Kosong</div>';
+        
+        document.getElementById('shop-total-label').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        this.updateChange();
+    },
+
+    syncQuickTotal() {
+        const p = parseFloat(document.getElementById('f-q-price').value) || 0;
+        document.getElementById('shop-total-label').innerText = `Rp ${p.toLocaleString('id-ID')}`;
+    },
+
+    updateChange() {
+        const total = parseFloat(document.getElementById('shop-total-label').innerText.replace(/[^0-9]/g,'')) || 0;
+        const pay = parseFloat(document.getElementById('f-shop-pay')?.value) || 0;
+        const change = pay - total;
+        const el = document.getElementById('f-shop-change');
+        if (el) el.value = change >= 0 ? `Rp ${change.toLocaleString('id-ID')}` : "Kurang!";
+    },
+
+    save(type) {
+        const mode = document.getElementById('f-shop-mode').value;
+        const accId = document.getElementById('f-shop-acc').value;
+        const cDate = document.getElementById('f-shop-date').value;
+        let amt = 0, note = "";
+
+        if (mode === 'quick') {
+            amt = parseFloat(document.getElementById('f-q-price').value) || 0;
+            note = document.getElementById('f-q-name').value;
+        } else {
+            if (this.items.length === 0) return;
+            amt = this.items.reduce((s, i) => s + i.total, 0);
+            note = this.items.map(i => `${i.name} (${i.qty}x)`).join(", ");
+        }
+
+        if (Engine.processTransaction({
+            type: type, accountId: accId, amount: amt, category: 'belanja', relation: '-', note: note,
+            customDate: new Date(cDate).toLocaleString('id-ID')
+        })) Core.closeModal();
+    }
+};
+
+window.FormShopping = FormShopping;
+
+
+========== FILE: js/dash_liquid.js ==========
+
+/* FILE: js/dash_liquid.js
+   FUNGSI: Menampilkan Dashboard 1 (Uang Cair: Dompet Saku & Rekening Bank)
+*/
+
+const DashLiquid = {
+    render() {
+        // 1. Ambil perhitungan akurat dari Mesin (Engine)
+        const stats = Engine.getLiquidStats();
+        const container = document.getElementById('dash-liquid-area');
+        
+        if (!container) return; // Keamanan agar tidak error jika HTML belum siap
+
+        // 2. Saring hanya akun bank untuk ditampilkan rinciannya
+        const bankAccounts = stats.accounts.filter(a => a.type === 'bank');
+
+        // 3. Rakit tampilan HTML
+        let html = `
+            <div class="dash-container">
+                <div class="card-summary card-full">
+                    <div class="label-small">TOTAL SALDO CAIR (DOMPET + BANK)</div>
+                    <div class="val-big" style="font-size: 1.6rem; color: var(--clr-in);">
+                        Rp ${stats.total.toLocaleString('id-ID')}
+                    </div>
+                </div>
+
+                <div class="card-summary" style="border-bottom: 4px solid var(--clr-in);">
+                    <div class="label-small" style="color: var(--clr-in);">UANG SAKU (TUNAI)</div>
+                    <div class="val-big">Rp ${stats.wallet.toLocaleString('id-ID')}</div>
+                </div>
+
+                <div class="card-summary" style="border-bottom: 4px solid var(--clr-bank);">
+                    <div class="label-small" style="color: var(--clr-bank);">TOTAL DI BANK</div>
+                    <div class="val-big">Rp ${stats.bank.toLocaleString('id-ID')}</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: var(--txt-muted); letter-spacing: 1px;">RINCIAN REKENING DIGITAL</div>
+                <button onclick="FormUniversal.openAddBank()" class="btn-icon" style="background: #444;">+ Tambah</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                ${bankAccounts.length === 0 ? 
+                    `<div style="grid-column: span 2; text-align: center; font-size: 0.8rem; color: #666; padding: 10px; background: var(--bg-card); border-radius: 12px; border: 1px dashed #444;">Belum ada rekening bank yang ditambahkan.</div>` 
+                    : 
+                    bankAccounts.map(b => `
+                    <div class="card-summary" style="padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="font-weight: 800; font-size: 0.75rem; color: #ddd;">${b.name}</div>
+                            <button onclick="Engine.deleteAccount('${b.id}')" style="background:none; border:none; color:var(--clr-out); font-size:1rem; cursor:pointer;">✕</button>
+                        </div>
+                        <div style="color: var(--clr-bank); font-weight: 900; font-size: 0.95rem; margin-top: 8px;">
+                            Rp ${b.balance.toLocaleString('id-ID')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 25px;">
+                <button onclick="FormUniversal.openTransfer()" style="background: var(--clr-bank); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; box-shadow: 0 4px 10px rgba(41, 121, 255, 0.2);">Transfer</button>
+                <button onclick="FormUniversal.openTarik()" style="background: #ff9800; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.75rem; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);">Tarik Tunai</button>
+                <button onclick="FormUniversal.openSetor()" style="background: var(--clr-in); color: black; border: none; padding: 12px; border-radius: 12px; font-weight: 900; font-size: 0.75rem; box-shadow: 0 4px 10px rgba(0, 230, 118, 0.2);">Setor Tunai</button>
+            </div>
+        `;
+
+        // 4. Tembakkan HTML ke dalam layar
+        container.innerHTML = html;
+    }
+};
+
+// Daftarkan komponen ini ke sistem utama
+window.DashLiquid = DashLiquid;
+
+
+========== FILE: js/dash_debt.js ==========
+
+/* FILE: js/dash_debt.js
+   FUNGSI: Menampilkan Dashboard 2 (Ringkasan Hutang, Piutang, dan Tanggungan Barang)
+*/
+
+const DashDebt = {
+    render() {
+        // 1. Minta perhitungan akurat dari Mesin (Engine)
+        const stats = Engine.getDebtStats();
+        const container = document.getElementById('dash-debt-area');
+        
+        if (!container) return; // Keamanan jika HTML belum siap
+
+        // 2. Rakit tampilan HTML
+        let html = `
+            <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: var(--txt-muted); letter-spacing: 1px;">RINGKASAN HUTANG & PIUTANG</div>
+            </div>
+
+            <div class="dash-container">
+                <div class="card-summary" style="border-bottom: 4px solid var(--clr-in); background: linear-gradient(180deg, var(--bg-card) 0%, rgba(0, 230, 118, 0.05) 100%);">
+                    <div class="label-small" style="color: var(--clr-in);">PIUTANG SAYA</div>
+                    <div class="val-big">Rp ${stats.piutang.toLocaleString('id-ID')}</div>
+                </div>
+
+                <div class="card-summary" style="border-bottom: 4px solid var(--clr-out); background: linear-gradient(180deg, var(--bg-card) 0%, rgba(255, 23, 68, 0.05) 100%);">
+                    <div class="label-small" style="color: var(--clr-out);">HUTANG SAYA</div>
+                    <div class="val-big">Rp ${stats.hutang.toLocaleString('id-ID')}</div>
+                </div>
+
+                <div class="card-summary card-full" style="border-bottom: 4px solid var(--clr-item); background: linear-gradient(180deg, var(--bg-card) 0%, rgba(255, 145, 0, 0.05) 100%);">
+                    <div class="label-small" style="color: var(--clr-item);">TOTAL TANGGUNGAN BARANG</div>
+                    <div class="val-big">Rp ${stats.barang.toLocaleString('id-ID')}</div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 25px;">
+                <button onclick="FormUniversal.openDebt()" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; padding: 16px; border-radius: 15px; font-weight: 800; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(0,0,0,0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                    + Catat Hutang / Piutang / Barang
+                </button>
+            </div>
+        `;
+
+        // 3. Tembakkan ke layar HTML
+        container.innerHTML = html;
+    }
+};
+
+// Daftarkan komponen ini ke sistem utama
+window.DashDebt = DashDebt;
+
+
+========== FILE: js/filter_advanced.js ==========
+
+/* FILE: js/filter_advanced.js
+   FUNGSI: Komponen Filter Dropdown Canggih & Pencarian
+*/
+
+const FilterAdvanced = {
+    render() {
+        const container = document.getElementById('filter-area');
+        if (!container) return;
+
+        // Ambil status filter saat ini dari Mandor (Core)
+        const f = Core.state.filters;
+
+        let html = `
+            <div class="filter-box">
+                <div style="font-size: 0.75rem; font-weight: 800; color: var(--txt-muted); letter-spacing: 1px; margin-bottom: 8px;">
+                    CARI & SARING TRANSAKSI
+                </div>
+                
+                <div style="position: relative; margin-bottom: 10px;">
+                    <input type="text" id="search-input" placeholder="Cari nama orang, toko, atau catatan..." 
+                        value="${f.search}" 
+                        oninput="FilterAdvanced.updateSearch(this.value)"
+                        style="width: 100%; padding: 14px 15px 14px 40px; border-radius: 12px; border: 1px solid #333; background: var(--bg-card); color: white; font-size: 0.85rem; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);">
+                    <span style="position: absolute; left: 14px; top: 14px; opacity: 0.5;">🔍</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    
+                    <select class="select-custom" onchange="FilterAdvanced.updateCategory(this.value)">
+                        <option value="all" ${f.category === 'all' ? 'selected' : ''}>Semua Kategori</option>
+                        <option value="liquid" ${f.category === 'liquid' ? 'selected' : ''}>Bank & Dompet Saku</option>
+                        <option value="debt" ${f.category === 'debt' ? 'selected' : ''}>Hutang & Piutang Uang</option>
+                        <option value="tanggungan" ${f.category === 'tanggungan' ? 'selected' : ''}>Tanggungan Barang</option>
+                    </select>
+
+                    <select class="select-custom" onchange="FilterAdvanced.updateFlow(this.value)">
+                        <option value="all" ${f.flow === 'all' ? 'selected' : ''}>Semua Arus (+/-)</option>
+                        <option value="in" ${f.flow === 'in' ? 'selected' : ''}>Uang Masuk (+)</option>
+                        <option value="out" ${f.flow === 'out' ? 'selected' : ''}>Uang Keluar (-)</option>
+                    </select>
+
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    },
+
+    // Fungsi-fungsi untuk memperbarui state dan me-refresh layar
+    updateSearch(val) {
+        Core.state.filters.search = val.toLowerCase();
+        // Hanya render List Item agar kotak ketikan tidak hilang fokus saat mengetik
+        if (window.ListItem) ListItem.render(); 
+    },
+
+    updateCategory(val) {
+        Core.state.filters.category = val;
+        Core.refreshUI();
+    },
+
+    updateFlow(val) {
+        Core.state.filters.flow = val;
+        Core.refreshUI();
+    }
+};
+
+window.FilterAdvanced = FilterAdvanced;
+
+
+========== FILE: js/list_item.js ==========
+
+/* FILE: js/list_item.js
+   FUNGSI: Mencetak baris riwayat transaksi dengan warna dan filter
+*/
+
+const ListItem = {
+    render() {
+        const container = document.getElementById('transaction-list-area');
+        if (!container) return;
+
+        const transactions = Core.state.data.transactions || [];
+        const filters = Core.state.filters;
+        const accounts = Core.state.data.accounts || [];
+
+        // 1. TERAPKAN FILTER CANGGIH
+        let filtered = transactions.filter(tx => {
+            // A. Filter Pencarian Teks
+            if (filters.search) {
+                const searchStr = `${tx.relation} ${tx.note} ${tx.category}`.toLowerCase();
+                if (!searchStr.includes(filters.search)) return false;
+            }
+
+            // B. Filter Kategori (Dropdown 1)
+            if (filters.category !== 'all') {
+                if (filters.category === 'liquid' && ['hutang', 'piutang', 'tanggungan'].includes(tx.category)) return false;
+                if (filters.category === 'debt' && !['hutang', 'piutang'].includes(tx.category)) return false;
+                if (filters.category === 'tanggungan' && tx.category !== 'tanggungan') return false;
+            }
+
+            // C. Filter Arus Kas (Dropdown 2)
+            if (filters.flow !== 'all') {
+                if (tx.type !== filters.flow) return false;
+            }
+
+            return true;
+        });
+
+        // 2. JIKA DATA KOSONG
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--txt-muted); background: var(--bg-card); border-radius: 15px; border: 1px dashed #444; box-shadow: var(--shadow);">
+                    Belum ada catatan transaksi yang sesuai.
+                </div>
+            `;
+            return;
+        }
+
+        // 3. RAKIT HTML BARIS PER BARIS
+        let html = `<div style="font-size: 0.75rem; font-weight: 800; color: var(--txt-muted); letter-spacing: 1px; margin-bottom: 12px; margin-top: 10px;">RIWAYAT TRANSAKSI (${filtered.length})</div>`;
+
+        filtered.forEach(tx => {
+            // Cari nama sumber dana (Dompet Saku / BCA / dll)
+            let accName = "Kas Sistem";
+            if (tx.accountId) {
+                const acc = accounts.find(a => a.id === tx.accountId);
+                if (acc) accName = acc.name;
+            }
+
+            // Tentukan Warna, Tanda Plus/Minus, dan Label
+            let sign = '';
+            let colorClass = '';
+            let borderClass = '';
+            let badgeText = '';
+            
+            if (tx.category === 'tanggungan') {
+                colorClass = 'txt-item';
+                borderClass = 'border-item';
+                sign = ''; // Tanggungan barang bersifat netral
+                badgeText = '📦 BARANG';
+            } else if (tx.type === 'in') {
+                colorClass = 'txt-in';
+                borderClass = 'border-in';
+                sign = '+';
+                badgeText = tx.category === 'hutang' ? `⚠️ HUTANG Masuk ke ${accName}` : `⬇️ Masuk ke ${accName}`;
+            } else {
+                colorClass = 'txt-out';
+                borderClass = 'border-out';
+                sign = '-';
+                badgeText = tx.category === 'piutang' ? `🤝 PIUTANG dari ${accName}` : `⬆️ Keluar dari ${accName}`;
+            }
+
+            if (tx.category === 'transfer') {
+                badgeText = `🔄 TRANSFER (${accName})`;
+            }
+
+            // Susun baris kartu
+            html += `
+            <div class="list-item ${borderClass}">
+                <div class="item-info">
+                    <div class="item-cat">${badgeText}</div>
+                    <div class="item-desc" style="font-size: 0.95rem;">${tx.relation}</div>
+                    <div class="item-date">📅 ${tx.date}</div>
+                </div>
+                <div class="item-right">
+                    <div class="item-amt ${colorClass}">${sign} Rp ${tx.amount.toLocaleString('id-ID')}</div>
+                    <div class="item-actions">
+                        <button onclick="ReceiptDigital.show(${tx.id})" style="background: none; border: none; font-size: 1.15rem; cursor: pointer; opacity: 0.8;">👁️</button>
+                        <button onclick="FormUniversal.openEdit(${tx.id})" style="background: none; border: none; font-size: 1.15rem; cursor: pointer; opacity: 0.8;">✏️</button>
+                        <button onclick="if(confirm('Hapus mutasi ini? Saldo akan dikembalikan secara otomatis.')) Engine.deleteTransaction(${tx.id})" style="background: none; border: none; font-size: 1.15rem; cursor: pointer; opacity: 0.8;">🗑️</button>
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+
+        // 4. Cetak ke Layar
+        container.innerHTML = html;
+    }
+};
+
+window.ListItem = ListItem;
+
+
+========== FILE: js/receipt_digital.js ==========
+
+/* FILE: js/receipt_digital.js
+   VERSI: 4.1 (FIX WARNA TANGGUNGAN BARANG)
+   FUNGSI: Struk Digital, Screenshot, Rekapitulasi Hutang Modern, & Clipboard Lengkap
+*/
+
+const ReceiptDigital = {
+
+    // =========================================================
+    // ★ AWAL CUSTOM FUNCTIONS ReceiptDigital
+    // Total: 9 custom functions
+    // Kelompok: Helper, Render, Aksi
+    // =========================================================
+
+
+
+    // ---------------------------------------------------------
+    // HELPER / UTILITY
+    // Fungsi bantu format angka dan data
+    // ---------------------------------------------------------
+
+    // Format angka jadi Rupiah
+    formatRp(amount) {
+        return 'Rp ' + Number(amount).toLocaleString('id-ID');
+    },
+
+    // Mendapatkan nama akun berdasarkan ID
+    getAccountName(accountId) {
+        if (!accountId) return 'Kas / Non-Tunai';
+        const accounts = Core.state.data.accounts || [];
+        const acc = accounts.find(a => a.id === accountId);
+        return acc ? acc.name : 'Kas Sistem';
+    },
+
+    // Mendapatkan label dan warna berdasarkan data transaksi
+    getTypeInfo(tx) {
+        let typeLabel = 'TRANSAKSI';
+        let colorTheme = 'var(--txt-white)';
+        let isDebt = false;
+        let isShopping = tx.note && tx.note.startsWith('Belanja: ');
+
+        if (tx.category === 'tanggungan') {
+            typeLabel = tx.type === 'out' ? 'AMBIL BARANG (TANGGUNGAN)' : 'BAYAR CICILAN BARANG';
+            colorTheme = tx.type === 'out' ? 'var(--clr-item)' : 'var(--clr-out)';
+            isDebt = true;
+        } else if (tx.category === 'piutang') {
+            isDebt = true;
+            typeLabel = tx.type === 'out' ? 'MEMBERI PINJAMAN (PIUTANG)' : 'TERIMA CICILAN PIUTANG';
+            colorTheme = tx.type === 'out' ? 'var(--clr-out)' : 'var(--clr-in)';
+        } else if (tx.category === 'hutang') {
+            isDebt = true;
+            typeLabel = tx.type === 'in' ? 'TERIMA PINJAMAN (HUTANG)' : 'BAYAR CICILAN HUTANG';
+            colorTheme = tx.type === 'in' ? 'var(--clr-out)' : 'var(--clr-in)';
+        } else if (tx.category === 'transfer') {
+            typeLabel = 'TRANSFER SALDO';
+            colorTheme = 'var(--clr-bank)';
+        } else {
+            typeLabel = tx.type === 'in' ? 'UANG MASUK' : 'UANG KELUAR';
+            colorTheme = tx.type === 'in' ? 'var(--clr-in)' : 'var(--clr-out)';
+        }
+
+        return { typeLabel, colorTheme, isDebt, isShopping };
+    },
+
+
+
+    // ---------------------------------------------------------
+    // RENDER / TAMPILAN
+    // Fungsi untuk merakit komponen HTML struk
+    // ---------------------------------------------------------
+
+    // Fungsi Utama: Menampilkan Struk Digital
+    show(id) {
+        const transactions = Core.state.data.transactions || [];
+        const tx = transactions.find(t => t.id === id);
+
+        if (!tx) return alert('Data transaksi tidak ditemukan!');
+
+        const accName = this.getAccountName(tx.accountId);
+        const info = this.getTypeInfo(tx);
+
+        let html = `
+            <div id="printable-receipt" style="background: #1a1a1a; padding: 25px 20px; border-radius: 15px; border: 1px solid #333; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
+                
+                <!-- HEADER STRUK -->
+                <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #444; padding-bottom: 15px;">
+                    <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; color: white;">💰 CuedMoney 💰</div>
+                    <div style="font-size: 0.6rem; color: var(--txt-muted); letter-spacing: 2px; text-transform: uppercase;">Smart Financial Ledger</div>
+                </div>
+
+                <!-- TIPE TRANSAKSI -->
+                <div style="text-align: center; color: ${info.colorTheme}; font-weight: 900; font-size: 0.85rem; letter-spacing: 1px; margin-bottom: 20px; text-transform: uppercase; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; border: 1px solid #333;">
+                    ${info.typeLabel}
+                </div>
+
+                <!-- INFO UTAMA -->
+                <div style="font-size: 0.8rem; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid #222;">
+                        <span style="color: var(--txt-muted);">📌 Ref. ID</span>
+                        <span style="font-family: monospace; font-weight: 700; color: var(--clr-bank);">TX-${tx.id}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid #222;">
+                        <span style="color: var(--txt-muted);">📅 Waktu</span>
+                        <span style="font-weight: 700;">${tx.date}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid #222;">
+                        <span style="color: var(--txt-muted);">🏦 Akun</span>
+                        <span style="font-weight: 700; color: var(--clr-bank);">${accName}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid #222;">
+                        <span style="color: var(--txt-muted);">👤 Relasi</span>
+                        <span style="font-weight: 700;">${tx.relation}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                        <span style="color: var(--txt-muted);">📂 Kategori</span>
+                        <span style="font-weight: 700; color: ${info.colorTheme}; text-transform: uppercase;">${tx.category || 'umum'}</span>
+                    </div>
+                </div>
+
+                <!-- RINCIAN BELANJA / CATATAN -->
+                ${info.isShopping ? this.renderShoppingList(tx.note) : `
+                    <div style="border-top: 2px dashed #444; padding-top: 15px; margin-bottom: 20px;">
+                        <div style="font-size: 0.7rem; color: var(--txt-muted); margin-bottom: 5px;">📝 CATATAN:</div>
+                        <div style="font-size: 0.85rem; font-weight: 600; background: #222; padding: 12px; border-radius: 10px; white-space: pre-wrap; line-height: 1.6;">${tx.note || '-'}</div>
+                    </div>
+                `}
+
+                <!-- NOMINAL -->
+                <div style="border-top: 2px dashed #444; padding: 20px 0; text-align: center;">
+                    <div style="font-size: 0.7rem; color: var(--txt-muted); margin-bottom: 5px;">NOMINAL TRANSAKSI</div>
+                    <div style="font-size: 2.2rem; font-weight: 900; color: ${info.colorTheme};">
+                        ${tx.category === 'tanggungan' && tx.type === 'out' ? '' : (tx.type === 'in' ? '+' : '-')} ${this.formatRp(tx.amount)}
+                    </div>
+                    ${tx.category === 'tanggungan' && tx.type === 'out' ? '<div style="font-size: 0.6rem; color: var(--txt-muted); margin-top: 3px;">Saldo tidak terpengaruh (catat barang)</div>' : ''}
+                </div>
+
+                <!-- REKAPITULASI HUTANG -->
+                ${info.isDebt ? this.renderDebtSummary(tx.relation, tx.category) : ''}
+
+                <!-- FOOTER STRUK -->
+                <div style="text-align: center; border-top: 2px dashed #444; padding-top: 15px; margin-top: 10px;">
+                    <div style="font-size: 0.55rem; color: #555; font-weight: 800; letter-spacing: 1px;">━━━ STRUK SAH & TERVERIFIKASI ━━━</div>
+                    <div style="font-size: 0.5rem; color: #333; margin-top: 3px;">Powered by CuedMoney Digital</div>
+                </div>
+            </div>
+
+            <!-- TOMBOL AKSI -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px;">
+                <button onclick="ReceiptDigital.screenshotReceipt()" style="padding: 14px 8px; background: var(--bg-card); color: var(--clr-in); border: 1px solid var(--clr-in); border-radius: 12px; font-weight: 800; font-size: 0.7rem;">📸 FOTO</button>
+                <button onclick="ReceiptDigital.copyToClipboard(${tx.id})" style="padding: 14px 8px; background: var(--bg-card); color: var(--clr-bank); border: 1px solid var(--clr-bank); border-radius: 12px; font-weight: 800; font-size: 0.7rem;">📋 SALIN</button>
+                <button onclick="Core.closeModal()" style="padding: 14px 8px; background: #333; color: white; border: 1px solid #444; border-radius: 12px; font-weight: 800; font-size: 0.7rem;">✕ TUTUP</button>
+            </div>
+        `;
+
+        Core.openModal(html);
+    },
+
+    // Merender daftar belanja dari parsing note
+    renderShoppingList(note) {
+        const itemsPart = note.replace('Belanja: ', '');
+        const items = itemsPart.split(', ');
+
+        let rows = items.map((item, index) => {
+            const match = item.match(/(.+)\((\d+)\)/);
+            if (match) {
+                return `<div style="display: flex; justify-content: space-between; font-size: 0.8rem; padding: 6px 0; border-bottom: 1px solid #2a2a2a;">
+                            <span style="color: #ccc;"><span style="color: #555; font-size: 0.7rem;">${index + 1}.</span> ${match[1].trim()}</span>
+                            <span style="font-weight: 700; color: var(--clr-bank);">x${match[2]}</span>
+                        </div>`;
+            }
+            return `<div style="font-size: 0.8rem; padding: 6px 0; border-bottom: 1px solid #2a2a2a; color: #ccc;"><span style="color: #555; font-size: 0.7rem;">${index + 1}.</span> ${item}</div>`;
+        }).join('');
+
+        return `
+            <div style="border-top: 2px dashed #444; padding-top: 15px; margin-bottom: 20px;">
+                <div style="font-size: 0.7rem; color: var(--txt-muted); margin-bottom: 8px;">🛒 RINCIAN BELANJA (${items.length} item):</div>
+                <div style="background: #222; padding: 12px; border-radius: 10px;">${rows}</div>
+            </div>
+        `;
+    },
+
+    // Merender Rekapitulasi Hutang/Piutang/Tanggungan Modern
+    renderDebtSummary(name, category) {
+        const transactions = Core.state.data.transactions || [];
+
+        // Ambil semua transaksi terkait nama dan kategori ini
+        const history = transactions
+            .filter(t => t.relation === name && t.category === category)
+            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+        if (history.length === 0) return '';
+
+        // Hitung total berdasarkan arah transaksi
+        let totalKeluar = 0;
+        let totalMasuk = 0;
+
+        history.forEach(t => {
+            if (t.type === 'out') totalKeluar += t.amount;
+            else totalMasuk += t.amount;
+        });
+
+        // Tentukan label dan warna sesuai kategori
+        let labelPinjam = '';
+        let labelBayar = '';
+        let totalPinjam = 0;
+        let totalBayar = 0;
+        let sisa = 0;
+        let categoryLabel = '';
+        let colorPinjam = 'var(--clr-out)';
+        let colorBayar = 'var(--clr-in)';
+        let signPinjam = '';
+        let signBayar = '';
+
+        if (category === 'piutang') {
+            categoryLabel = '🤝 PIUTANG';
+            labelPinjam = 'Total Saya Pinjamkan';
+            labelBayar = 'Total Dibayar Kembali';
+            totalPinjam = totalKeluar;
+            totalBayar = totalMasuk;
+            sisa = totalKeluar - totalMasuk;
+            colorPinjam = 'var(--clr-out)';
+            colorBayar = 'var(--clr-in)';
+            signPinjam = '-';
+            signBayar = '+';
+        } else if (category === 'hutang') {
+            categoryLabel = '⚠️ HUTANG';
+            labelPinjam = 'Total Saya Pinjam';
+            labelBayar = 'Total Saya Bayar';
+            totalPinjam = totalMasuk;
+            totalBayar = totalKeluar;
+            sisa = totalMasuk - totalKeluar;
+            colorPinjam = 'var(--clr-out)';
+            colorBayar = 'var(--clr-in)';
+            signPinjam = '+';
+            signBayar = '-';
+        } else if (category === 'tanggungan') {
+            categoryLabel = '📦 TANGGUNGAN';
+            labelPinjam = 'Total Ambil Barang';
+            labelBayar = 'Total Bayar Cicilan';
+            totalPinjam = totalKeluar;
+            totalBayar = totalMasuk;
+            sisa = totalKeluar - totalMasuk;
+            // KHUSUS TANGGUNGAN:
+            // Ambil Barang = kuning, tanpa tanda
+            // Bayar Cicilan = merah, dengan tanda -
+            colorPinjam = 'var(--clr-item)';
+            colorBayar = 'var(--clr-out)';
+            signPinjam = '';
+            signBayar = '-';
+        }
+
+        const isLunas = sisa <= 0;
+        const progressPersen = totalPinjam > 0 ? Math.min(100, Math.round((totalBayar / totalPinjam) * 100)) : 0;
+
+        // Rakit riwayat transaksi berurutan dengan running balance
+        let runningBalance = 0;
+        let riwayatHTML = history.map((h, index) => {
+            let label = '';
+            let amountColor = '';
+            let icon = '';
+            let sign = '';
+
+            if (category === 'piutang') {
+                if (h.type === 'out') {
+                    label = 'Memberi Pinjaman';
+                    icon = '🔴';
+                    amountColor = 'var(--clr-out)';
+                    sign = '-';
+                    runningBalance += h.amount;
+                } else {
+                    label = 'Terima Cicilan';
+                    icon = '🟢';
+                    amountColor = 'var(--clr-in)';
+                    sign = '+';
+                    runningBalance -= h.amount;
+                }
+            } else if (category === 'hutang') {
+                if (h.type === 'in') {
+                    label = 'Terima Pinjaman';
+                    icon = '🔴';
+                    amountColor = 'var(--clr-out)';
+                    sign = '+';
+                    runningBalance += h.amount;
+                } else {
+                    label = 'Bayar Cicilan';
+                    icon = '🟢';
+                    amountColor = 'var(--clr-in)';
+                    sign = '-';
+                    runningBalance -= h.amount;
+                }
+            } else if (category === 'tanggungan') {
+                if (h.type === 'out') {
+                    // AMBIL BARANG: kuning, tanpa tanda +/-
+                    label = 'Ambil Barang';
+                    icon = '📦';
+                    amountColor = 'var(--clr-item)';
+                    sign = '';
+                    runningBalance += h.amount;
+                } else {
+                    // BAYAR CICILAN: merah, dengan tanda -
+                    label = 'Bayar Cicilan';
+                    icon = '💸';
+                    amountColor = 'var(--clr-out)';
+                    sign = '-';
+                    runningBalance -= h.amount;
+                }
+            }
+
+            if (runningBalance < 0) runningBalance = 0;
+
+            return `
+                <div style="padding: 10px 12px; border-bottom: 1px solid #2a2a2a; ${index === history.length - 1 ? 'border-bottom: none;' : ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #ddd;">
+                                ${icon} ${label}
+                            </div>
+                            <div style="font-size: 0.6rem; color: #666; margin-top: 2px;">
+                                📅 ${h.date}
+                            </div>
+                            <div style="font-size: 0.6rem; color: #555; margin-top: 1px; font-style: italic;">
+                                ${h.note || '-'}
+                            </div>
+                        </div>
+                        <div style="text-align: right; min-width: 100px;">
+                            <div style="font-weight: 900; font-size: 0.8rem; color: ${amountColor};">
+                                ${sign}${sign ? ' ' : ''}${this.formatRp(h.amount)}
+                            </div>
+                            <div style="font-size: 0.55rem; color: #666; margin-top: 2px;">
+                                Sisa: ${this.formatRp(runningBalance)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <!-- REKAPITULASI MODERN -->
+            <div style="background: linear-gradient(180deg, #1e1e1e 0%, #151515 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                
+                <!-- HEADER REKAP -->
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <div style="font-size: 0.65rem; font-weight: 800; color: var(--txt-muted); letter-spacing: 2px;">REKAPITULASI ${categoryLabel}</div>
+                    <div style="font-size: 1rem; font-weight: 900; color: white; margin-top: 3px;">👤 ${name}</div>
+                </div>
+
+                <!-- PROGRESS BAR -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--txt-muted); margin-bottom: 5px;">
+                        <span>Progress Pembayaran</span>
+                        <span style="font-weight: 800; color: ${isLunas ? 'var(--clr-in)' : 'var(--clr-item)'};">${progressPersen}%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #333; border-radius: 10px; overflow: hidden;">
+                        <div style="width: ${progressPersen}%; height: 100%; background: ${isLunas ? 'var(--clr-in)' : 'linear-gradient(90deg, var(--clr-item), var(--clr-out))'}; border-radius: 10px; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+
+                <!-- RINGKASAN ANGKA -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div style="background: #222; padding: 12px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.55rem; color: var(--txt-muted); font-weight: 800; letter-spacing: 1px;">${labelPinjam.toUpperCase()}</div>
+                        <div style="font-size: 1rem; font-weight: 900; color: ${colorPinjam}; margin-top: 4px;">${signPinjam}${signPinjam ? ' ' : ''}${this.formatRp(totalPinjam)}</div>
+                    </div>
+                    <div style="background: #222; padding: 12px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 0.55rem; color: var(--txt-muted); font-weight: 800; letter-spacing: 1px;">${labelBayar.toUpperCase()}</div>
+                        <div style="font-size: 1rem; font-weight: 900; color: ${colorBayar}; margin-top: 4px;">${signBayar}${signBayar ? ' ' : ''}${this.formatRp(totalBayar)}</div>
+                    </div>
+                </div>
+
+                <!-- SISA TAGIHAN -->
+                <div style="background: ${isLunas ? 'rgba(0,230,118,0.1)' : 'rgba(255,23,68,0.1)'}; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid ${isLunas ? 'rgba(0,230,118,0.3)' : 'rgba(255,23,68,0.3)'}; margin-bottom: 15px;">
+                    <div style="font-size: 0.6rem; color: var(--txt-muted); font-weight: 800; letter-spacing: 1px;">SISA TAGIHAN</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: ${isLunas ? 'var(--clr-in)' : 'var(--clr-out)'}; margin-top: 5px;">
+                        ${isLunas ? '✅ LUNAS' : this.formatRp(sisa)}
+                    </div>
+                    ${isLunas ? '<div style="font-size: 0.6rem; color: var(--clr-in); margin-top: 3px;">Semua pembayaran telah selesai</div>' : ''}
+                </div>
+
+                <!-- RIWAYAT TRANSAKSI -->
+                <div>
+                    <div style="font-size: 0.65rem; font-weight: 800; color: var(--txt-muted); letter-spacing: 1px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📋 RIWAYAT LENGKAP</span>
+                        <span style="color: #555;">${history.length} transaksi</span>
+                    </div>
+                    <div id="debt-history-scroll" style="max-height: 250px; overflow-y: auto; background: #1a1a1a; border-radius: 12px; border: 1px solid #2a2a2a;">
+                        ${riwayatHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+
+
+    // ---------------------------------------------------------
+    // AKSI / ACTION
+    // Fungsi untuk screenshot dan salin teks struk
+    // ---------------------------------------------------------
+
+    // Screenshot struk dan download sebagai gambar
+    screenshotReceipt() {
+        const receiptEl = document.getElementById('printable-receipt');
+        if (!receiptEl) return alert('Elemen struk tidak ditemukan!');
+
+        // Cek apakah html2canvas tersedia
+        if (typeof html2canvas === 'undefined') {
+            alert('Library screenshot belum dimuat. Pastikan koneksi internet aktif.');
+            return;
+        }
+
+        // Tampilkan loading
+        const btnFoto = event.target;
+        const originalText = btnFoto.innerHTML;
+        btnFoto.innerHTML = '⏳ PROSES...';
+        btnFoto.disabled = true;
+
+        // EXPAND riwayat agar tidak terpotong saat screenshot
+        const scrollBox = document.getElementById('debt-history-scroll');
+        let originalMaxHeight = '';
+        let originalOverflow = '';
+
+        if (scrollBox) {
+            originalMaxHeight = scrollBox.style.maxHeight;
+            originalOverflow = scrollBox.style.overflowY;
+            scrollBox.style.maxHeight = 'none';
+            scrollBox.style.overflowY = 'visible';
+        }
+
+        // Tunggu sebentar agar DOM update dulu
+        setTimeout(() => {
+            html2canvas(receiptEl, {
+                backgroundColor: '#1a1a1a',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                scrollY: -window.scrollY,
+                windowHeight: receiptEl.scrollHeight
+            }).then(canvas => {
+                // Buat link download
+                const link = document.createElement('a');
+                const timestamp = Date.now();
+                link.download = `CuedMoney_Struk_${timestamp}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                btnFoto.innerHTML = '✅ TERSIMPAN!';
+                setTimeout(() => {
+                    btnFoto.innerHTML = originalText;
+                    btnFoto.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Screenshot gagal:', err);
+                alert('Gagal mengambil screenshot. Coba lagi.');
+                btnFoto.innerHTML = originalText;
+                btnFoto.disabled = false;
+            }).finally(() => {
+                // KEMBALIKAN max-height seperti semula
+                if (scrollBox) {
+                    scrollBox.style.maxHeight = originalMaxHeight;
+                    scrollBox.style.overflowY = originalOverflow;
+                }
+            });
+        }, 100);
+    },
+
+    // Salin teks struk ke clipboard (WhatsApp Friendly)
+    copyToClipboard(id) {
+        const transactions = Core.state.data.transactions || [];
+        const tx = transactions.find(t => t.id === id);
+        if (!tx) return alert('Transaksi tidak ditemukan!');
+
+        const info = this.getTypeInfo(tx);
+        const accName = this.getAccountName(tx.accountId);
+
+        // Rakit teks utama
+        let text = '';
+        text += `*💰 BUKTI TRANSAKSI CUEDMONEY 💰*\n`;
+        text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `📌 Ref     : TX-${tx.id}\n`;
+        text += `📅 Waktu   : ${tx.date}\n`;
+        text += `🏦 Akun    : ${accName}\n`;
+        text += `👤 Relasi  : ${tx.relation}\n`;
+        text += `📂 Kategori: ${(tx.category || 'umum').toUpperCase()}\n`;
+        text += `📝 Tipe    : ${info.typeLabel}\n`;
+        text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+        // Jika belanja, tambahkan rincian item
+        if (info.isShopping) {
+            const itemsPart = tx.note.replace('Belanja: ', '');
+            const items = itemsPart.split(', ');
+            text += `🛒 *RINCIAN BELANJA (${items.length} item):*\n`;
+            items.forEach((item, i) => {
+                text += `   ${i + 1}. ${item}\n`;
+            });
+            text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        } else {
+            text += `📝 Catatan : ${tx.note || '-'}\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        }
+
+        // Nominal - khusus tanggungan ambil barang tanpa tanda
+        let nominalSign = tx.type === 'in' ? '+' : '-';
+        if (tx.category === 'tanggungan' && tx.type === 'out') {
+            nominalSign = '';
+        }
+        text += `💵 *NOMINAL: ${nominalSign}${this.formatRp(tx.amount)}*\n`;
+        text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+        // Jika hutang/piutang/tanggungan, tambahkan rekapitulasi
+        if (info.isDebt) {
+            const history = transactions
+                .filter(t => t.relation === tx.relation && t.category === tx.category)
+                .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            let totalPinjam = 0;
+            let totalBayar = 0;
+            let labelPinjam = '';
+            let labelBayar = '';
+            let signPinjamText = '';
+            let signBayarText = '-';
+
+            if (tx.category === 'piutang') {
+                labelPinjam = 'Total Dipinjamkan';
+                labelBayar = 'Total Dibayar';
+                signPinjamText = '-';
+                signBayarText = '+';
+                history.forEach(t => {
+                    if (t.type === 'out') totalPinjam += t.amount;
+                    else totalBayar += t.amount;
+                });
+            } else if (tx.category === 'hutang') {
+                labelPinjam = 'Total Dipinjam';
+                labelBayar = 'Total Dibayar';
+                signPinjamText = '+';
+                signBayarText = '-';
+                history.forEach(t => {
+                    if (t.type === 'in') totalPinjam += t.amount;
+                    else totalBayar += t.amount;
+                });
+            } else if (tx.category === 'tanggungan') {
+                labelPinjam = 'Total Ambil Barang';
+                labelBayar = 'Total Bayar Cicilan';
+                signPinjamText = '';
+                signBayarText = '-';
+                history.forEach(t => {
+                    if (t.type === 'out') totalPinjam += t.amount;
+                    else totalBayar += t.amount;
+                });
+            }
+
+            const sisa = totalPinjam - totalBayar;
+            const isLunas = sisa <= 0;
+
+            text += `\n📊 *REKAPITULASI ${(tx.category || '').toUpperCase()} - ${tx.relation}:*\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            text += `${labelPinjam} : ${signPinjamText}${this.formatRp(totalPinjam)}\n`;
+            text += `${labelBayar}  : ${signBayarText}${this.formatRp(totalBayar)}\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            text += `*SISA TAGIHAN : ${isLunas ? '✅ LUNAS' : this.formatRp(sisa)}*\n`;
+            text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+            // Riwayat singkat
+            text += `\n📋 *RIWAYAT (${history.length} transaksi):*\n`;
+            let runBal = 0;
+            history.forEach((h, i) => {
+                let label = '';
+                let rSign = '';
+
+                if (tx.category === 'piutang') {
+                    if (h.type === 'out') {
+                        label = 'Pinjamkan';
+                        rSign = '-';
+                        runBal += h.amount;
+                    } else {
+                        label = 'Cicilan';
+                        rSign = '+';
+                        runBal -= h.amount;
+                    }
+                } else if (tx.category === 'hutang') {
+                    if (h.type === 'in') {
+                        label = 'Pinjam';
+                        rSign = '+';
+                        runBal += h.amount;
+                    } else {
+                        label = 'Bayar';
+                        rSign = '-';
+                        runBal -= h.amount;
+                    }
+                } else if (tx.category === 'tanggungan') {
+                    if (h.type === 'out') {
+                        label = 'Ambil';
+                        rSign = '';
+                        runBal += h.amount;
+                    } else {
+                        label = 'Bayar';
+                        rSign = '-';
+                        runBal -= h.amount;
+                    }
+                }
+
+                if (runBal < 0) runBal = 0;
+                text += `${i + 1}. ${h.date} | ${label} ${rSign}${this.formatRp(h.amount)} | Sisa: ${this.formatRp(runBal)}\n`;
+            });
+            text += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        }
+
+        text += `\n_Powered by CuedMoney Digital 💰_`;
+
+        // Salin ke clipboard dengan error handling
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Teks struk berhasil disalin ke clipboard!\n\nSilakan paste ke WhatsApp atau aplikasi lain.');
+            }).catch(err => {
+                console.error('Clipboard gagal:', err);
+                this.fallbackCopy(text);
+            });
+        } else {
+            this.fallbackCopy(text);
+        }
+    },
+
+    // Fallback jika clipboard API tidak tersedia
+    fallbackCopy(text) {
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('✅ Teks struk berhasil disalin! (mode fallback)');
+        } catch (err) {
+            console.error('Fallback copy gagal:', err);
+            alert('❌ Gagal menyalin. Silakan salin manual dari struk.');
+        }
+    }
+
+
+
+    // =========================================================
+    // ★ AKHIR CUSTOM FUNCTIONS ReceiptDigital
+    // Total: 9 custom functions
+    // =========================================================
+};
+
+// Mendaftarkan object ke global agar bisa dipanggil dari file lain
+window.ReceiptDigital = ReceiptDigital;
+
+
+========== FILE: js/data_sync.js ==========
+
+/* FILE: js/data_sync.js
+   FUNGSI: Modul Export dan Import Data (Backup Data JSON)
+*/
+
+const SyncModule = {
+    // Fungsi untuk Mengunduh (Backup) Data ke File JSON
+    exportData() {
+        // Ambil seluruh data dari memori (Buku Besar)
+        const dataToExport = Core.state.data;
+        // Ubah menjadi format teks JSON dengan spasi agar rapi
+        const dataStr = JSON.stringify(dataToExport, null, 2);
+        
+        // Buat file (Blob) bertipe JSON
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        // Buat elemen link tersembunyi untuk memicu proses download di browser
+        const a = document.createElement('a');
+        
+        // Buat nama file otomatis dengan tanggal hari ini (contoh: CuedMoney_Backup_2026-04-21.json)
+        const dateStr = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `CuedMoney_Backup_${dateStr}.json`;
+        
+        // Eksekusi klik otomatis dan bersihkan memori browser
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert("Data berhasil diekspor! Silakan amankan file JSON tersebut.");
+    },
+
+    // Fungsi untuk Memuat (Restore) Data dari File JSON
+    importData(event) {
+        // Ambil file yang dipilih oleh Pak Bos
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        
+        // Saat file selesai dibaca oleh sistem
+        reader.onload = function(e) {
+            try {
+                // Terjemahkan teks di dalam file menjadi objek data
+                const importedData = JSON.parse(e.target.result);
+                
+                // Validasi ringan untuk memastikan ini benar-benar file backup CuedMoney
+                if (!importedData.accounts || !importedData.transactions) {
+                    throw new Error("Format file tidak sesuai dengan struktur CuedMoney.");
+                }
+
+                // Munculkan peringatan sebelum menimpa Buku Besar saat ini
+                if (confirm("PERINGATAN: Mengimpor data akan menimpa seluruh data yang ada saat ini! Anda yakin ingin melanjutkan?")) {
+                    
+                    // Timpa data di Mandor (Core) dengan data dari file
+                    Core.state.data.accounts = importedData.accounts;
+                    Core.state.data.transactions = importedData.transactions;
+                    Core.state.data.price_memory = importedData.price_memory || {}; // Jaga-jaga jika di file lama tidak ada price_memory
+                    
+                    // Simpan permanen ke HP dan paksa aplikasi menggambar ulang tampilannya
+                    Core.saveData();
+                    Core.refreshUI();
+                    
+                    alert("Data berhasil diimpor! Aplikasi CuedMoney telah diperbarui.");
+                }
+            } catch (error) {
+                alert("Gagal mengimpor data! File mungkin rusak atau format tidak dikenali. Detail Error: " + error.message);
+            }
+            
+            // Reset kolom input file agar tombol import bisa diklik lagi dengan file yang sama jika diperlukan
+            event.target.value = '';
+        };
+        
+        // Mulai baca isi file sebagai teks
+        reader.readAsText(file);
+    }
+};
+
+// Daftarkan modul ini ke sistem utama
+window.SyncModule = SyncModule;
+

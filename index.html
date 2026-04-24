@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CuedMoney - Ledger</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CuedMoney">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="app-header">    
+        <div class="logo">CuedMoney</div>
+        <div class="header-actions">
+            <button onclick="SyncModule.exportData()" class="btn-icon">👆Export</button>
+            <button onclick="document.getElementById('import-file').click()" class="btn-icon">👇Import</button>
+            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="SyncModule.importData(event)">
+        </div>
+    </header>
+
+    <main id="app-content">
+        <section id="dash-liquid-area"></section>
+
+        <section id="dash-debt-area"></section>
+
+        <section id="filter-area"></section>
+
+        <section id="transaction-list-area"></section>
+    </main>
+
+    <button class="fab" onclick="FormUniversal.open()">+</button>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="Core.closeModal()"></div>
+    <div id="modal-container" class="modal-container">
+        <button class="modal-close" onclick="Core.closeModal()">✕</button>
+        <div id="modal-body"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/item_db.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/data_sync.js"></script>
+    <script src="js/dash_liquid.js"></script>
+    <script src="js/dash_debt.js"></script>
+    <script src="js/filter_advanced.js"></script>
+    <script src="js/list_item.js"></script>
+    <script src="js/form_universal.js"></script>
+    <script src="js/form_shopping.js"></script>
+    <script src="js/receipt_digital.js"></script>
+    <script>
+        // Registrasi Service Worker untuk mode offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('CuedMoney SW terdaftar:', reg.scope))
+                    .catch(err => console.log('CuedMoney SW gagal:', err));
+            });
+        }
+    </script>
+</body>
+</html>
