@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
     <!-- BANNER UPDATE -->
     <div id="update-banner" class="update-banner">
         <div class="update-text">
@@ -22,12 +23,13 @@
         <button class="btn-update" onclick="AppUpdate.doUpdate()">UPDATE</button>
         <button class="btn-dismiss" onclick="AppUpdate.dismissUpdate()">✕</button>
     </div>
-    <header class="app-header">    
-        <div class="logo" id="app-logo" onclick="if(window.License)License.handleLogoClick()">CuedMoney <span id="app-version" style="font-size:0.5rem;color:#555;font-weight:400;"></span></div>
-        <div class="header-actions">
-            <button onclick="SyncModule.exportData()" class="btn-icon">👆Export</button>
-            <button onclick="document.getElementById('import-file').click()" class="btn-icon">👇Import</button>
-            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="SyncModule.importData(event)">
+
+    <!-- HEADER -->
+    <header class="app-header">
+        <button class="btn-sidebar-toggle" id="btn-sidebar-toggle" onclick="Core.openSidebar()">☰</button>
+        <div class="logo" id="app-logo" onclick="if(window.License)License.handleLogoClick()">
+            CuedMoney
+            <span id="app-version" style="font-size:0.5rem;color:#555;font-weight:400;"></span>
         </div>
     </header>
 
@@ -54,13 +56,62 @@
         </div>
     </div>
 
+    <!-- SIDEBAR OVERLAY (background gelap saat sidebar terbuka) -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="Core.closeSidebar()"></div>
+
+    <!-- SIDEBAR PANEL -->
+    <div id="sidebar-panel" class="sidebar-panel">
+
+        <!-- Tombol tutup sidebar -->
+        <div class="sidebar-header">
+            <span class="sidebar-title">Menu</span>
+            <button class="sidebar-close" onclick="Core.closeSidebar()">✕</button>
+        </div>
+
+        <!-- Section: Rincian Rekening Digital -->
+        <div class="sidebar-content">
+            <div id="sidebar-rekening-area">
+                <!-- Diisi oleh DashLiquid.renderSidebar() -->
+            </div>
+
+            <!-- Divider -->
+            <div class="sidebar-divider"></div>
+
+            <!-- Section: Hutang & Piutang -->
+            <div id="sidebar-debt-area">
+                <!-- Diisi oleh DashDebt.renderSidebar() -->
+            </div>
+
+            <!-- Divider -->
+            <div class="sidebar-divider"></div>
+
+            <!-- Menu Navigasi -->
+            <div class="sidebar-menu">
+                <button class="sidebar-menu-item" onclick="Core.showTentang()">
+                    <span class="sidebar-menu-icon">ℹ️</span>
+                    <span class="sidebar-menu-label">Tentang</span>
+                </button>
+                <button class="sidebar-menu-item" onclick="Core.closeSidebar(); SyncModule.exportData()">
+                    <span class="sidebar-menu-icon">📤</span>
+                    <span class="sidebar-menu-label">Export Data</span>
+                </button>
+                <button class="sidebar-menu-item" onclick="Core.closeSidebar(); document.getElementById('import-file').click()">
+                    <span class="sidebar-menu-icon">📥</span>
+                    <span class="sidebar-menu-label">Import Data</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Input file import (tersembunyi) -->
+    <input type="file" id="import-file" style="display: none;" accept=".json" onchange="SyncModule.importData(event)">
+
+    <!-- KONTEN UTAMA -->
     <main id="app-content">
         <section id="dash-liquid-area"></section>
-
         <section id="dash-debt-area"></section>
-
         <section id="filter-area"></section>
-
         <section id="transaction-list-area"></section>
     </main>
 
@@ -87,9 +138,9 @@
     <script src="js/form_shopping.js"></script>
     <script src="js/receipt_digital.js"></script>
     <script>
-        // Registrasi Service Worker untuk mode offline
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('CuedMoney SW terdaftar:', reg.scope))
                     .catch(err => console.log('CuedMoney SW gagal:', err));
             });

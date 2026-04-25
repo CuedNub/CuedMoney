@@ -421,3 +421,466 @@ body {
     background: rgba(0,0,0,0.9);
     transform: scale(0.95);
 }
+
+/* =========================================================
+   SIDEBAR KIRI
+   Tambahan v1.4.1 - Sidebar panel, overlay, animasi
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   HEADER BARU
+   Tombol hamburger ☰ di sebelah kiri logo
+   --------------------------------------------------------- */
+
+.app-header {
+    justify-content: flex-start;
+    gap: 15px;
+}
+
+.btn-sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--txt-white);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.btn-sidebar-toggle:active {
+    opacity: 0.7;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR OVERLAY
+   Background gelap di belakang sidebar
+   --------------------------------------------------------- */
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR PANEL
+   Panel utama yang slide dari kiri
+   --------------------------------------------------------- */
+
+.sidebar-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 82%;
+    max-width: 360px;
+    height: 100%;
+    background: #1a1a1a;
+    z-index: 300;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid #2a2a2a;
+}
+
+.sidebar-panel.show {
+    transform: translateX(0);
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR HEADER
+   Baris atas sidebar (judul + tombol tutup)
+   --------------------------------------------------------- */
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 15px 20px;
+    border-bottom: 1px solid #2a2a2a;
+    flex-shrink: 0;
+    background: #1a1a1a;
+}
+
+.sidebar-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--txt-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.sidebar-close {
+    background: #2a2a2a;
+    border: none;
+    color: var(--txt-white);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-close:active {
+    background: #333;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR CONTENT
+   Area scroll isi sidebar
+   --------------------------------------------------------- */
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 0;
+}
+
+/* Hilangkan scrollbar tapi tetap bisa scroll */
+.sidebar-content::-webkit-scrollbar {
+    display: none;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR DIVIDER
+   Garis pemisah antar section
+   --------------------------------------------------------- */
+
+.sidebar-divider {
+    height: 1px;
+    background: #2a2a2a;
+    margin: 10px 20px;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR SECTION HEADER
+   Judul section + tombol aksi kecil
+   --------------------------------------------------------- */
+
+.sidebar-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px 8px 20px;
+}
+
+.sidebar-section-title {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--txt-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.sidebar-btn-add {
+    background: #2a2a2a;
+    color: var(--txt-white);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sidebar-btn-add:active {
+    background: #333;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR REKENING
+   Daftar rekening digital di sidebar
+   --------------------------------------------------------- */
+
+.sidebar-account-list {
+    padding: 5px 15px 5px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-account-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--clr-bank);
+}
+
+.sidebar-account-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.sidebar-account-name {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ddd;
+}
+
+.sidebar-account-del {
+    background: none;
+    border: none;
+    color: var(--clr-out);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.sidebar-account-balance {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: var(--clr-bank);
+}
+
+.sidebar-account-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    margin-top: 5px;
+    background: #222;
+    border-radius: 10px;
+    margin-left: 15px;
+    margin-right: 15px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--txt-muted);
+}
+
+.sidebar-empty {
+    padding: 12px 20px;
+    font-size: 0.75rem;
+    color: #555;
+    font-style: italic;
+    text-align: center;
+    background: #222;
+    border-radius: 10px;
+    margin: 5px 15px;
+    border: 1px dashed #333;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR HUTANG & PIUTANG
+   Ringkasan hutang piutang di sidebar
+   --------------------------------------------------------- */
+
+.sidebar-debt-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 5px 15px 8px 15px;
+}
+
+.sidebar-debt-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.sidebar-debt-piutang {
+    border-bottom: 3px solid var(--clr-in);
+}
+
+.sidebar-debt-hutang {
+    border-bottom: 3px solid var(--clr-out);
+}
+
+.sidebar-debt-label {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: var(--txt-muted);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.sidebar-debt-value {
+    font-size: 0.85rem;
+    font-weight: 900;
+}
+
+.sidebar-debt-barang {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 0 15px 8px 15px;
+    border-bottom: 3px solid var(--clr-item);
+}
+
+.sidebar-debt-selisih {
+    background: #222;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin: 0 15px 5px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sidebar-debt-selisih-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+/* ---------------------------------------------------------
+   SIDEBAR MENU
+   Tombol navigasi di bawah sidebar
+   --------------------------------------------------------- */
+
+.sidebar-menu {
+    padding: 5px 15px 10px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    color: var(--txt-white);
+    padding: 13px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.sidebar-menu-item:active {
+    background: #2a2a2a;
+}
+
+.sidebar-menu-icon {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sidebar-menu-label {
+    flex: 1;
+}
+
+/* =========================================================
+   POPUP TENTANG
+   Modal informasi aplikasi dan lisensi
+   ========================================================= */
+
+.tentang-container {
+    padding: 5px 0 20px 0;
+}
+
+/* Header popup Tentang */
+.tentang-header {
+    text-align: center;
+    padding: 10px 0 20px 0;
+    border-bottom: 1px solid #333;
+    margin-bottom: 5px;
+}
+
+.tentang-logo {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.tentang-app-name {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--txt-white);
+    letter-spacing: -0.5px;
+}
+
+.tentang-tagline {
+    font-size: 0.7rem;
+    color: var(--txt-muted);
+    margin-top: 4px;
+}
+
+/* Section di popup Tentang */
+.tentang-section {
+    padding: 15px 5px 10px 5px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.tentang-section:last-child {
+    border-bottom: none;
+}
+
+.tentang-section-title {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--txt-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* Baris info di popup Tentang */
+.tentang-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 7px 0;
+    border-bottom: 1px solid #1e1e1e;
+    gap: 10px;
+}
+
+.tentang-row:last-child {
+    border-bottom: none;
+}
+
+.tentang-key {
+    font-size: 0.75rem;
+    color: var(--txt-muted);
+    flex-shrink: 0;
+}
+
+.tentang-val {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--txt-white);
+    text-align: right;
+}
+
+/* Catatan penting di popup Tentang */
+.tentang-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tentang-note-item {
+    font-size: 0.75rem;
+    color: var(--txt-muted);
+    line-height: 1.5;
+    padding: 8px 10px;
+    background: #1e1e1e;
+    border-radius: 8px;
+}
